@@ -1,0 +1,16 @@
+**/target/
+**/build/
+**/.gradle/
+**/.idea/
+**/.vscode/
+**/node_modules/
+n11-client/
+.git/
+.gitignore
+*.log
+*.iml
+RUNBOOK.md
+CLAUDE.md
+readme.md
+mprocs.yaml
+docker/
