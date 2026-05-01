@@ -67,7 +67,9 @@ jobs:
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       - name: Jib build & push
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-        run: mvn -pl ${{ matrix.service }} -am compile jib:build -DskipTests
+        run: |
+          mvn -pl ${{ matrix.service }} -am compile -DskipTests
+          mvn -pl ${{ matrix.service }} jib:build -DskipTests
 
   deploy-staging:
     needs: [ detect-changes, build-test ]
