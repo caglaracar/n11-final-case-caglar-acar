@@ -68,8 +68,8 @@ jobs:
         run: mvn -pl ${{ matrix.service }} -am compile jib:build -DskipTests
 
   deploy-staging:
-    needs: build-test
-    if: github.ref == 'refs/heads/develop'
+    needs: [ detect-changes, build-test ]
+    if: github.ref == 'refs/heads/develop' && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != ''
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -100,8 +100,8 @@ jobs:
             ${{ secrets.SLACK_WEBHOOK_URL }}
 
   deploy-prod:
-    needs: build-test
-    if: github.ref == 'refs/heads/main'
+    needs: [ detect-changes, build-test ]
+    if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != ''
     runs-on: ubuntu-latest
     strategy:
       matrix:
