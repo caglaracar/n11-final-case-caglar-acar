@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!--
+      Servis adı (label olarak Loki'ye gider).
+      spring.application.name değerini Spring property olarak okuyoruz.
+    -->
+    <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="unknown-service"/>
+    <springProperty scope="context" name="lokiUrl" source="logging.loki.url" defaultValue="http://localhost:3100/loki/api/v1/push"/>
+
+    <!--
+      Loki appender (com.github.loki4j).
+      Her log satırı şu label'larla gönderilir:
+        app=<spring.application.name>, level=<INFO|WARN|ERROR>, host=<hostname>
+      Log gövdesi: timestamp + thread + logger + message + stacktrace.
+    -->
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${lokiUrl}</url>
+        </http>
+        <format>
+            <label>
+                <pattern>app=${appName},host=${HOSTNAME},level=%level</pattern>
+            </label>
+            <message>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{40} - %msg%n%ex</pattern>
+            </message>
+            <sortByTime>true</sortByTime>
+        </format>
+        <batchMaxItems>500</batchMaxItems>
+        <batchTimeoutMs>5000</batchTimeoutMs>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOKI"/>
+    </root>
+
+</configuration>
