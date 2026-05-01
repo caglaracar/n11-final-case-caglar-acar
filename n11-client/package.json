@@ -10,6 +10,9 @@
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit --project tsconfig.app.json"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "i18next": "^25.3.2",
     "react": "^19.1.2",
