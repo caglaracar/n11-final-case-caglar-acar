@@ -1,0 +1,94 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/dev/v1/auth/**
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/dev/v1/user-profile/**,/dev/v1/wishlist/**,/dev/v1/address/**
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/dev/v1/product/**,/dev/v1/review/**,/dev/v1/blog/**,/dev/v1/banner/**
+        - id: basket-service
+          uri: lb://basket-service
+          predicates:
+            - Path=/dev/v1/basket/**
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/dev/v1/order/**,/dev/v1/admin/**
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/dev/v1/payment/**
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/dev/v1/contact/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:bootcamp-n11-jwt-secret-please-change-in-production-please}
+
+gateway:
+  security:
+    whitelist:
+      paths:
+        - /dev/v1/auth/register
+        - /dev/v1/auth/admin/register
+        - /dev/v1/auth/login
+        - /dev/v1/auth/refresh
+        - /dev/v1/contact/submit
+        - /dev/v1/order/track
+        - /dev/v1/order/confirm-delivery
+      prefixes:
+        - /actuator
+        - /v3/api-docs
+        - /swagger-ui
+        - /dev/v1/product/find-all
+        - /dev/v1/product/find-by-id
+        - /dev/v1/product/popular
+        - /dev/v1/product/price-drops
+        - /dev/v1/product/flash-deals
+        - /dev/v1/product/search/trending
+        - /dev/v1/product/category/find-all
+        - /dev/v1/product/brand/find-all
+        - /dev/v1/review/product
+        - /dev/v1/blog
+        - /dev/v1/banner/find-all
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
