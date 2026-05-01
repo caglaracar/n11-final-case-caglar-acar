@@ -4,6 +4,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI}
+      database: ${MONGO_DB_NAME:user_db}
 eureka:
   client:
     enabled: false
