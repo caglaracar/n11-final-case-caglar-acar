@@ -1,0 +1,69 @@
+server:
+  port: 9095
+
+spring:
+  application:
+    name: payment-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: ${POSTGRES_USER:caglar}
+    password: ${POSTGRES_PASSWORD:root}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/paymentdb
+  jpa:
+    hibernate:
+      ddl-auto: update
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: payment-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all          # Tüm replica'lar onaylamalı
+      retries: 3
+      properties:
+        enable.idempotence: true   # Producer idempotency — mükerrer event engeller
+        max.in.flight.requests.per.connection: 5
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# ──────────────────────────────────────────────────────────────────
+# payment.provider: mock | iyzico
+# ──────────────────────────────────────────────────────────────────
+# Payment Provider Strategy:
+#   mock   → Otomatik saga consumer, %100 başarı (development / demo / ödev için)
+#   iyzico → Frontend /payment/checkout endpoint'i + gerçek İyzico sandbox
+#            (Geçerli IYZICO_API_KEY / IYZICO_SECRET_KEY env'leri gerekir.
+#             Sandbox merchant kaydı: https://sandbox-merchant.iyzipay.com/auth/register)
+# ──────────────────────────────────────────────────────────────────
+app:
+  security:
+    mode: open
+
+payment:
+  provider: ${PAYMENT_PROVIDER:mock}
+  mock:
+    success-rate: 1.0   # Test: her zaman başarılı
+
+iyzico:
+  api-key:    ${IYZICO_API_KEY:sandbox-REPLACE-ME}
+  secret-key: ${IYZICO_SECRET_KEY:sandbox-REPLACE-ME}
+  base-url:   ${IYZICO_BASE_URL:https://sandbox-api.iyzipay.com}
+
+openapi:
+  title: Payment Service API
+  version: v1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
