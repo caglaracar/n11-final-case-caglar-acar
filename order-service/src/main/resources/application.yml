@@ -1,0 +1,55 @@
+server:
+  port: 9097
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: ${POSTGRES_USER:caglar}
+    password: ${POSTGRES_PASSWORD:root}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/orderdb
+  jpa:
+    hibernate:
+      ddl-auto: update
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: order-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:bootcamp-n11-jwt-secret-please-change-in-production-please}
+
+app:
+  security:
+    mode: downstream
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+
+order:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  recent-orders-page-size: 10
+
+openapi:
+  title: Order Service API
+  version: v1
+  description: Sipariş yönetimi
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
