@@ -1,0 +1,54 @@
+server:
+  port: 9090
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: ${POSTGRES_USER:caglar}
+    password: ${POSTGRES_PASSWORD:root}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/authdb
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:bootcamp-n11-jwt-secret-please-change-in-production-please}
+    access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS:900}
+    refresh-ttl-seconds: ${JWT_REFRESH_TTL_SECONDS:1209600}
+    issuer: ${JWT_ISSUER:n11-bootcamp}
+
+openapi:
+  title: Auth Service API
+  version: v1
+  description: Authentication & authorization endpoints
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  seed:
+    admin:
+      username: ${ADMIN_USERNAME:admin}
+      email: ${ADMIN_EMAIL:admin@shopcart.local}
+      password: ${ADMIN_PASSWORD:Admin123!}
+  admin:
+    invite-code: ${ADMIN_INVITE_CODE:n11-bootcamp-admin-2026}
