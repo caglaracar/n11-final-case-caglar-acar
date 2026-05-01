@@ -121,6 +121,33 @@
                         </annotationProcessorPaths>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>com.google.cloud.tools</groupId>
+                    <artifactId>jib-maven-plugin</artifactId>
+                    <version>3.4.4</version>
+                    <configuration>
+                        <from>
+                            <image>eclipse-temurin:17-jre-alpine</image>
+                        </from>
+                        <to>
+                            <image>europe-west1-docker.pkg.dev/n11-patika-final/n11-images/${project.artifactId}</image>
+                            <tags>
+                                <tag>latest</tag>
+                                <tag>${project.version}</tag>
+                            </tags>
+                        </to>
+                        <container>
+                            <ports>
+                                <port>8080</port>
+                            </ports>
+                            <jvmFlags>
+                                <jvmFlag>-Xms256m</jvmFlag>
+                                <jvmFlag>-Xmx512m</jvmFlag>
+                            </jvmFlags>
+                            <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+                        </container>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
