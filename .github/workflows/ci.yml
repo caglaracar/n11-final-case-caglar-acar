@@ -95,8 +95,10 @@ jobs:
             --add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres \
             --set-env-vars="SPRING_PROFILES_ACTIVE=staging" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=MONGODB_URI:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest" \
-            --memory=512Mi \
-            --cpu=1
+            --memory=1Gi \
+            --cpu=1 \
+            --timeout=300 \
+            --cpu-boost
       - name: Notify Slack
         if: always() && env.SLACK_WEBHOOK_URL != '' && matrix.service != 'gateway-service' && matrix.service != 'discovery-service'
         env:
@@ -160,8 +162,10 @@ jobs:
             --add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres \
             --set-env-vars="SPRING_PROFILES_ACTIVE=prod" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=MONGODB_URI:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest" \
-            --memory=512Mi \
-            --cpu=1
+            --memory=1Gi \
+            --cpu=1 \
+            --timeout=300 \
+            --cpu-boost
       - name: Notify Slack
         if: always() && env.SLACK_WEBHOOK_URL != '' && matrix.service != 'gateway-service' && matrix.service != 'discovery-service'
         env:
