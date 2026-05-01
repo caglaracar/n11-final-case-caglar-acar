@@ -85,7 +85,7 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Deploy to Cloud Run (staging)
-        if: matrix.service != 'discovery-service'
+        if: matrix.service != 'discovery-service' && matrix.service != 'gateway-service'
         run: |
           gcloud run deploy ${{ matrix.service }}-staging \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
@@ -98,13 +98,43 @@ jobs:
             --memory=512Mi \
             --cpu=1
       - name: Notify Slack
-        if: always() && env.SLACK_WEBHOOK_URL != ''
+        if: always() && env.SLACK_WEBHOOK_URL != '' && matrix.service != 'gateway-service' && matrix.service != 'discovery-service'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{"text":"[${{ matrix.service }}] staging deploy: ${{ job.status }} 🚀"}' \
             "$SLACK_WEBHOOK_URL"
+
+  deploy-staging-gateway:
+    needs: [ detect-changes, deploy-staging ]
+    if: github.ref == 'refs/heads/develop' && contains(needs.detect-changes.outputs.services, 'gateway-service')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Deploy gateway with downstream URLs (staging)
+        run: |
+          get_url() { gcloud run services describe "$1-staging" --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo ""; }
+          AUTH_URL=$(get_url auth-service)
+          USER_URL=$(get_url user-service)
+          PRODUCT_URL=$(get_url product-service)
+          BASKET_URL=$(get_url basket-service)
+          ORDER_URL=$(get_url order-service)
+          PAYMENT_URL=$(get_url payment-service)
+          NOTIFICATION_URL=$(get_url notification-service)
+          gcloud run deploy gateway-service-staging \
+            --image=${{ env.REGISTRY }}/gateway-service:latest \
+            --region=${{ env.REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=staging,AUTH_SERVICE_URL=${AUTH_URL},USER_SERVICE_URL=${USER_URL},PRODUCT_SERVICE_URL=${PRODUCT_URL},BASKET_SERVICE_URL=${BASKET_URL},ORDER_SERVICE_URL=${ORDER_URL},PAYMENT_SERVICE_URL=${PAYMENT_URL},NOTIFICATION_SERVICE_URL=${NOTIFICATION_URL}" \
+            --set-secrets="JWT_SECRET=JWT_SECRET:latest,REDIS_HOST=REDIS_HOST:latest" \
+            --memory=512Mi \
+            --cpu=1
 
   deploy-prod:
     needs: [ detect-changes, build-test ]
@@ -120,7 +150,7 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Deploy to Cloud Run (prod)
-        if: matrix.service != 'discovery-service'
+        if: matrix.service != 'discovery-service' && matrix.service != 'gateway-service'
         run: |
           gcloud run deploy ${{ matrix.service }} \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
@@ -133,10 +163,40 @@ jobs:
             --memory=512Mi \
             --cpu=1
       - name: Notify Slack
-        if: always() && env.SLACK_WEBHOOK_URL != ''
+        if: always() && env.SLACK_WEBHOOK_URL != '' && matrix.service != 'gateway-service' && matrix.service != 'discovery-service'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{"text":"[${{ matrix.service }}] PROD deploy: ${{ job.status }} 🎉"}' \
             "$SLACK_WEBHOOK_URL"
+
+  deploy-prod-gateway:
+    needs: [ detect-changes, deploy-prod ]
+    if: github.ref == 'refs/heads/main' && contains(needs.detect-changes.outputs.services, 'gateway-service')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Deploy gateway with downstream URLs (prod)
+        run: |
+          get_url() { gcloud run services describe "$1" --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo ""; }
+          AUTH_URL=$(get_url auth-service)
+          USER_URL=$(get_url user-service)
+          PRODUCT_URL=$(get_url product-service)
+          BASKET_URL=$(get_url basket-service)
+          ORDER_URL=$(get_url order-service)
+          PAYMENT_URL=$(get_url payment-service)
+          NOTIFICATION_URL=$(get_url notification-service)
+          gcloud run deploy gateway-service \
+            --image=${{ env.REGISTRY }}/gateway-service:latest \
+            --region=${{ env.REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=prod,AUTH_SERVICE_URL=${AUTH_URL},USER_SERVICE_URL=${USER_URL},PRODUCT_SERVICE_URL=${PRODUCT_URL},BASKET_SERVICE_URL=${BASKET_URL},ORDER_SERVICE_URL=${ORDER_URL},PAYMENT_SERVICE_URL=${PAYMENT_URL},NOTIFICATION_SERVICE_URL=${NOTIFICATION_URL}" \
+            --set-secrets="JWT_SECRET=JWT_SECRET:latest,REDIS_HOST=REDIS_HOST:latest" \
+            --memory=512Mi \
+            --cpu=1
