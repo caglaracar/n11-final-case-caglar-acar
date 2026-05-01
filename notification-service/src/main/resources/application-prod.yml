@@ -1,5 +1,23 @@
 server:
   port: 8080
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    listener:
+      auto-startup: false
+      missing-topics-fatal: false
+    admin:
+      fail-fast: false
+      auto-create: false
+    producer:
+      properties:
+        max.block.ms: 5000
+        delivery.timeout.ms: 10000
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
 eureka:
   client:
     enabled: false
