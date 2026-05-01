@@ -1,0 +1,128 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PROJECT_ID: n11-patika-final
+  REGION: europe-west1
+  REGISTRY: europe-west1-docker.pkg.dev/n11-patika-final/n11-images
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            auth-service: ['auth-service/**', 'common-lib/**']
+            user-service: ['user-service/**', 'common-lib/**']
+            product-service: ['product-service/**', 'common-lib/**']
+            basket-service: ['basket-service/**', 'common-lib/**']
+            order-service: ['order-service/**', 'common-lib/**']
+            payment-service: ['payment-service/**', 'common-lib/**']
+            notification-service: ['notification-service/**', 'common-lib/**']
+            gateway-service: ['gateway-service/**', 'common-lib/**']
+            discovery-service: ['discovery-service/**', 'common-lib/**']
+
+  build-test:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.services != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Build common-lib
+        run: mvn -pl common-lib install -DskipTests
+      - name: Test
+        run: mvn -pl ${{ matrix.service }} test
+      - name: Build with Jib (main/develop only)
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+      - name: Jib build & push
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        run: mvn -pl ${{ matrix.service }} -am compile jib:build -DskipTests
+
+  deploy-staging:
+    needs: build-test
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Deploy to Cloud Run (staging)
+        run: |
+          gcloud run deploy ${{ matrix.service }}-staging \
+            --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
+            --region=${{ env.REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=staging" \
+            --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=MONGODB_URI:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest" \
+            --memory=512Mi \
+            --cpu=1
+      - name: Notify Slack
+        if: always()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"[${{ matrix.service }}] staging deploy: ${{ job.status }} 🚀"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  deploy-prod:
+    needs: build-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Deploy to Cloud Run (prod)
+        run: |
+          gcloud run deploy ${{ matrix.service }} \
+            --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
+            --region=${{ env.REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=prod" \
+            --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=MONGODB_URI:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest" \
+            --memory=512Mi \
+            --cpu=1
+      - name: Notify Slack
+        if: always()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"[${{ matrix.service }}] PROD deploy: ${{ job.status }} 🎉"}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

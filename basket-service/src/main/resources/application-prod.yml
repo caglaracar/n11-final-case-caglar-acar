@@ -1,0 +1,9 @@
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: 6379
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false

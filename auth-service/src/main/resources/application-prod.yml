@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql:///auth_db?cloudSqlInstance=${CLOUD_SQL_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.postgres.SocketFactory
+    username: n11user
+    password: ${DB_USER_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

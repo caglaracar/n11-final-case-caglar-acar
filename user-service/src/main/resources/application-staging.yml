@@ -1,0 +1,8 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
