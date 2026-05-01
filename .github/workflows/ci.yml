@@ -85,6 +85,7 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Deploy to Cloud Run (staging)
+        if: matrix.service != 'discovery-service'
         run: |
           gcloud run deploy ${{ matrix.service }}-staging \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
@@ -97,11 +98,13 @@ jobs:
             --memory=512Mi \
             --cpu=1
       - name: Notify Slack
-        if: always()
+        if: always() && env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{"text":"[${{ matrix.service }}] staging deploy: ${{ job.status }} 🚀"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+            "$SLACK_WEBHOOK_URL"
 
   deploy-prod:
     needs: [ detect-changes, build-test ]
@@ -117,6 +120,7 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
       - name: Deploy to Cloud Run (prod)
+        if: matrix.service != 'discovery-service'
         run: |
           gcloud run deploy ${{ matrix.service }} \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
@@ -129,8 +133,10 @@ jobs:
             --memory=512Mi \
             --cpu=1
       - name: Notify Slack
-        if: always()
+        if: always() && env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{"text":"[${{ matrix.service }}] PROD deploy: ${{ job.status }} 🎉"}' \
-            ${{ secrets.SLACK_WEBHOOK_URL }}
+            "$SLACK_WEBHOOK_URL"
