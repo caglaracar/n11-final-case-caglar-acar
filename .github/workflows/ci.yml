@@ -50,10 +50,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
+      - name: Install parent POM
+        run: mvn -N install -DskipTests
       - name: Build common-lib
         run: mvn -pl common-lib install -DskipTests
       - name: Test
-        run: mvn -pl ${{ matrix.service }} test
+        run: mvn -pl ${{ matrix.service }} -am test
       - name: Build with Jib (main/develop only)
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
         id: auth
