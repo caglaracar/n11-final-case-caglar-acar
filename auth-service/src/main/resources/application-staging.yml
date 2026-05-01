@@ -1,20 +1,16 @@
-server:
-  port: 8080
 spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
       - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
-      - org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration
   datasource:
     url: jdbc:postgresql:///auth_db?cloudSqlInstance=${CLOUD_SQL_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.postgres.SocketFactory
     username: n11user
     password: ${DB_USER_PASSWORD}
     hikari:
+      maximum-pool-size: 2
+      minimum-idle: 1
       connection-timeout: 30000
-      initialization-fail-timeout: 60000
-      maximum-pool-size: 5
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
