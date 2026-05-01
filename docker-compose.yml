@@ -1,0 +1,288 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: n11-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: caglar
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  mongo:
+    image: mongo:7
+    container_name: n11-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7
+    container_name: n11-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.0
+    container_name: n11-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: n11-kafka
+    depends_on: [ zookeeper ]
+    ports:
+      - "9094:9094"  # host'tan erişim
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: n11-kafka-ui
+    depends_on: [ kafka ]
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: n11-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: "true"
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: n11-mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: n11-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: n11-grafana
+    restart: unless-stopped
+    depends_on: [ loki ]
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+
+  # ── Microservices ─────────────────────────────────────────────
+
+  discovery-service:
+    build:
+      context: .
+      args:
+        SERVICE_NAME: discovery-service
+    image: n11/discovery-service:latest
+    container_name: n11-discovery-service
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+
+  auth-service:
+    build:
+      context: .
+      args:
+        SERVICE_NAME: auth-service
+    image: n11/auth-service:latest
+    container_name: n11-auth-service
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: caglar
+      POSTGRES_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - postgres
+      - discovery-service
+
+  user-service:
+    build:
+      context: .
+      args:
+        SERVICE_NAME: user-service
+    image: n11/user-service:latest
+    container_name: n11-user-service
+    restart: unless-stopped
+    ports:
+      - "9091:9091"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/UserProfileDB
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - mongo
+      - discovery-service
+
+  product-service:
+    build:
+      context: .
+      args:
+        SERVICE_NAME: product-service
+    image: n11/product-service:latest
+    container_name: n11-product-service
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/ProductDB
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SPRING_KAFKA_BOOTSTRAPSERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - mongo
+      - redis
+      - kafka
+      - discovery-service
+
+  basket-service:
+    build:
+      context: .
+      args:
+        SERVICE_NAME: basket-service
+    image: n11/basket-service:latest
+    container_name: n11-basket-service
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    environment:
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - redis
+      - discovery-service
+
+  order-service:
+    build:
+      context: .
+      args:
+        SERVICE_NAME: order-service
+    image: n11/order-service:latest
+    container_name: n11-order-service
+    restart: unless-stopped
+    ports:
+      - "9097:9097"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: caglar
+      POSTGRES_PASSWORD: root
+      SPRING_KAFKA_BOOTSTRAPSERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - postgres
+      - kafka
+      - discovery-service
+
+  payment-service:
+    build:
+      context: .
+      args:
+        SERVICE_NAME: payment-service
+    image: n11/payment-service:latest
+    container_name: n11-payment-service
+    restart: unless-stopped
+    ports:
+      - "9095:9095"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: caglar
+      POSTGRES_PASSWORD: root
+      SPRING_KAFKA_BOOTSTRAPSERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - postgres
+      - kafka
+      - discovery-service
+
+  notification-service:
+    build:
+      context: .
+      args:
+        SERVICE_NAME: notification-service
+    image: n11/notification-service:latest
+    container_name: n11-notification-service
+    restart: unless-stopped
+    ports:
+      - "9096:9096"
+    environment:
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+      MAIL_SMTP_AUTH: "false"
+      MAIL_SMTP_STARTTLS: "false"
+      SPRING_KAFKA_BOOTSTRAPSERVERS: kafka:9092
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - mailhog
+      - kafka
+      - discovery-service
+
+  gateway-service:
+    build:
+      context: .
+      args:
+        SERVICE_NAME: gateway-service
+    image: n11/gateway-service:latest
+    container_name: n11-gateway-service
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      - discovery-service
+      - auth-service
+      - user-service
+      - product-service
+      - basket-service
+      - order-service
+      - payment-service
+      - notification-service
+
+volumes:
+  postgres-data:
+  mongo-data:
+  loki-data:
+  grafana-data:

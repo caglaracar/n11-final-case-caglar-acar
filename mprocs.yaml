@@ -1,0 +1,44 @@
+procs:
+  infra:
+    shell: "docker compose up"
+    autostart: true
+
+  discovery:
+    shell: "mvn -pl discovery-service -am -q -DskipTests spring-boot:run"
+    autostart: true
+
+  auth:
+    shell: "mvn -pl auth-service -am -q -DskipTests spring-boot:run"
+    autostart: false
+
+  user:
+    shell: "mvn -pl user-service -am -q -DskipTests spring-boot:run"
+    autostart: false
+
+  product:
+    shell: "mvn -pl product-service -am -q -DskipTests spring-boot:run"
+    autostart: false
+
+  basket:
+    shell: "mvn -pl basket-service -am -q -DskipTests spring-boot:run"
+    autostart: false
+
+  order:
+    shell: "mvn -pl order-service -am -q -DskipTests spring-boot:run"
+    autostart: false
+
+  payment:
+    shell: "mvn -pl payment-service -am -q -DskipTests spring-boot:run"
+    autostart: false
+
+  notification:
+    shell: "mvn -pl notification-service -am -q -DskipTests spring-boot:run"
+    autostart: false
+
+  gateway:
+    shell: "mvn -pl gateway-service -am -q -DskipTests spring-boot:run"
+    autostart: false
+
+  web:
+    shell: "npm --prefix n11-client run dev"
+    autostart: false
