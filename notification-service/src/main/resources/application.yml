@@ -1,0 +1,56 @@
+server:
+  port: 9096
+
+spring:
+  application:
+    name: notification-service
+  # ────────────────────────────────────────────────────────────────
+  # Mail backend (env ile override edilebilir):
+  #   • Default = Gmail SMTP (gerçek mail gider)
+  #   • Lokal MailHog için:
+  #       MAIL_HOST=localhost MAIL_PORT=1025 MAIL_USERNAME= MAIL_PASSWORD= \
+  #       MAIL_SMTP_AUTH=false MAIL_SMTP_STARTTLS=false mvn -pl notification-service spring-boot:run
+  # ────────────────────────────────────────────────────────────────
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${MAIL_SMTP_AUTH:true}
+          starttls:
+            enable: ${MAIL_SMTP_STARTTLS:true}
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+app:
+  security:
+    mode: open
+
+notification:
+  mail:
+    from: ${MAIL_FROM:${MAIL_USERNAME:no-reply@n11-bootcamp.local}}
+  slack:
+    webhook-url: ${SLACK_WEBHOOK_URL:}
+  contact:
+    to: ${CONTACT_TO:admin@n11.local}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
