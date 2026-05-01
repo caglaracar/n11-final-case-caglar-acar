@@ -1,8 +1,42 @@
 spring:
-  data:
-    redis:
-      host: ${REDIS_HOST}
-      port: 6379
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL}
+          predicates:
+            - Path=/dev/v1/auth/**
+        - id: user-service
+          uri: ${USER_SERVICE_URL}
+          predicates:
+            - Path=/dev/v1/user-profile/**,/dev/v1/wishlist/**,/dev/v1/address/**
+        - id: product-service
+          uri: ${PRODUCT_SERVICE_URL}
+          predicates:
+            - Path=/dev/v1/product/**,/dev/v1/review/**,/dev/v1/blog/**,/dev/v1/banner/**
+        - id: basket-service
+          uri: ${BASKET_SERVICE_URL}
+          predicates:
+            - Path=/dev/v1/basket/**
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL}
+          predicates:
+            - Path=/dev/v1/order/**,/dev/v1/admin/**
+        - id: payment-service
+          uri: ${PAYMENT_SERVICE_URL}
+          predicates:
+            - Path=/dev/v1/payment/**
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL}
+          predicates:
+            - Path=/dev/v1/contact/**
+    data:
+      redis:
+        host: ${REDIS_HOST}
+        port: 6379
 eureka:
   client:
     register-with-eureka: false
