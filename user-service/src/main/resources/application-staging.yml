@@ -1,8 +1,11 @@
+server:
+  port: 8080
 spring:
   data:
     mongodb:
       uri: ${MONGODB_URI}
 eureka:
   client:
+    enabled: false
     register-with-eureka: false
     fetch-registry: false

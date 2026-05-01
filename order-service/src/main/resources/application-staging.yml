@@ -1,3 +1,5 @@
+server:
+  port: 8080
 spring:
   datasource:
     url: jdbc:postgresql:///order_db?cloudSqlInstance=${CLOUD_SQL_CONNECTION_NAME}&socketFactory=com.google.cloud.sql.postgres.SocketFactory
@@ -8,5 +10,6 @@ spring:
       ddl-auto: update
 eureka:
   client:
+    enabled: false
     register-with-eureka: false
     fetch-registry: false

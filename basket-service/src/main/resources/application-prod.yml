@@ -1,3 +1,5 @@
+server:
+  port: 8080
 spring:
   data:
     redis:
@@ -5,5 +7,6 @@ spring:
       port: 6379
 eureka:
   client:
+    enabled: false
     register-with-eureka: false
     fetch-registry: false

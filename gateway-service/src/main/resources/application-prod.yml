@@ -1,5 +1,9 @@
+server:
+  port: 8080
 spring:
   cloud:
+    discovery:
+      enabled: false
     gateway:
       discovery:
         locator:
@@ -33,11 +37,12 @@ spring:
           uri: ${NOTIFICATION_SERVICE_URL}
           predicates:
             - Path=/dev/v1/contact/**
-    data:
-      redis:
-        host: ${REDIS_HOST}
-        port: 6379
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
 eureka:
   client:
+    enabled: false
     register-with-eureka: false
     fetch-registry: false
