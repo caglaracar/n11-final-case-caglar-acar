@@ -9,18 +9,14 @@ spring:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
       - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
       - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
-      - org.springframework.boot.autoconfigure.data.mongo.MongoRepositoriesAutoConfiguration
-      - org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
   data:
-    redis:
-      host: localhost
-      port: 6379
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/BasketDB}
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
 
@@ -28,13 +24,10 @@ app:
   security:
     mode: downstream
 
-basket:
-  ttl-seconds: 86400  # 1 gün
-
 openapi:
   title: Basket Service API
   version: v1
-  description: Sepet (Redis) işlemleri
+  description: Sepet (MongoDB) işlemleri
 
 management:
   endpoints:
