@@ -38,6 +38,8 @@ public class OrderEventPublisher {
             log.info("Kafka publish topic={} key={}", topic, key);
         } catch (JsonProcessingException e) {
             log.error("Kafka publish serialize failed topic={}: {}", topic, e.getMessage());
+        } catch (Exception e) {
+            log.error("Kafka publish failed topic={} key={}: {}", topic, key, e.getMessage());
         }
     }
 }
