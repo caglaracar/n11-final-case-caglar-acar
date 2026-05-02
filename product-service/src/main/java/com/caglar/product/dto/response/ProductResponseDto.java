@@ -21,8 +21,6 @@ public record ProductResponseDto(
         List<String> images,
         String badge,
         List<String> features,
-        Double rating,
-        Integer reviewCount,
         Long sellerAuthId,
         Long viewCount,
         Long searchCount,

@@ -6,9 +6,7 @@ import com.caglar.product.controller.IProductApi;
 import com.caglar.product.dto.request.CreateProductRequestDto;
 import com.caglar.product.dto.request.UpdateProductRequestDto;
 import com.caglar.product.dto.response.ProductResponseDto;
-import com.caglar.product.dto.response.TrendingTermResponseDto;
 import com.caglar.product.service.ProductService;
-import com.caglar.product.service.SearchStatsService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,8 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 import static com.caglar.common.constant.RestApis.CREATE;
 import static com.caglar.common.constant.RestApis.DELETE;
 import static com.caglar.common.constant.RestApis.FIND_ALL;
@@ -41,7 +37,6 @@ import static com.caglar.common.constant.RestApis.UPDATE;
 public class ProductController extends BaseController implements IProductApi {
 
     private final ProductService productService;
-    private final SearchStatsService searchStatsService;
 
     @Override
     @PostMapping(CREATE)
@@ -80,30 +75,5 @@ public class ProductController extends BaseController implements IProductApi {
                                                                           @RequestParam(required = false) String brandId,
                                                                           Pageable pageable) {
         return ok(productService.getList(q, categoryId, brandId, pageable));
-    }
-
-    @Override
-    @GetMapping("/popular")
-    public ResponseEntity<BaseResponse<List<ProductResponseDto>>> getPopularList(@RequestParam(defaultValue = "5") int limit) {
-        return ok(productService.getPopularList(limit));
-    }
-
-    @Override
-    @GetMapping("/price-drops")
-    public ResponseEntity<BaseResponse<List<ProductResponseDto>>> getPriceDropList(@RequestParam(defaultValue = "12") int limit) {
-        return ok(productService.getPriceDropList(limit));
-    }
-
-    @Override
-    @GetMapping("/flash-deals")
-    public ResponseEntity<BaseResponse<List<ProductResponseDto>>> getFlashDealList() {
-        return ok(productService.getFlashDealList());
-    }
-
-    @Override
-    @GetMapping("/search/trending")
-    public ResponseEntity<BaseResponse<List<TrendingTermResponseDto>>> getTrendingTermList(
-            @RequestParam(defaultValue = "10") int limit) {
-        return ok(searchStatsService.topTerms(limit));
     }
 }

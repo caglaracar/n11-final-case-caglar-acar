@@ -38,8 +38,6 @@ public final class ProductMapper {
                 .images(p.getImages())
                 .badge(p.getBadge())
                 .features(p.getFeatures())
-                .rating(p.getRating())
-                .reviewCount(p.getReviewCount())
                 .sellerAuthId(p.getSellerAuthId())
                 .viewCount(p.getViewCount() == null ? 0L : p.getViewCount())
                 .searchCount(searchCount == null ? 0L : searchCount)
@@ -65,8 +63,6 @@ public final class ProductMapper {
                 .images(dto.images() == null ? new ArrayList<>() : new ArrayList<>(dto.images()))
                 .badge(dto.badge())
                 .features(dto.features() == null ? new ArrayList<>() : new ArrayList<>(dto.features()))
-                .rating(0d)
-                .reviewCount(0)
                 .sellerAuthId(sellerAuthId)
                 .build();
     }

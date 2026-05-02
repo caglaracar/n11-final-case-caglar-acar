@@ -4,7 +4,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.Builder;
 
-import java.time.Instant;
 import java.util.List;
 
 @Builder
@@ -12,7 +11,6 @@ public record UpdateProductRequestDto(
         String name,
         String description,
         @Positive Double price,
-        Double originalPrice,
         String categoryId,
         String subcategory,
         String brand,
@@ -20,6 +18,5 @@ public record UpdateProductRequestDto(
         String imageUrl,
         List<String> images,
         String badge,
-        List<String> features,
-        Instant flashDealEndsAt
+        List<String> features
 ) {}

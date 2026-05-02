@@ -9,6 +9,9 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +33,8 @@ public class SearchStatsServiceImpl implements SearchStatsService {
 
     private static final String KEY_TERMS        = "search:terms";
     private static final String KEY_PRODUCT_HITS = "search:product:hits";
+    private static final String KEY_POPULAR_PFX  = "popular:views:"; // popular:views:yyyy-MM-dd
+    private static final long   POPULAR_TTL_DAYS = 3L;
     private static final int    MAX_TOP_TERMS    = 50;
 
     private final StringRedisTemplate redis;
@@ -80,6 +85,33 @@ public class SearchStatsServiceImpl implements SearchStatsService {
         int n = clampLimit(limit);
         List<TrendingTermResponseDto> result = safe("topTerms", () -> readTopTerms(n));
         return result == null ? Collections.emptyList() : result;
+    }
+
+    @Override
+    public void recordProductView(String productId) {
+        if (!StringUtils.hasText(productId)) {
+            return;
+        }
+        safe("recordProductView", () -> {
+            String key = todayPopularKey();
+            redis.opsForZSet().incrementScore(key, productId, 1);
+            redis.expire(key, java.time.Duration.ofDays(POPULAR_TTL_DAYS));
+            return null;
+        });
+    }
+
+    @Override
+    public List<String> topPopularProductIds(int limit) {
+        int n = limit <= 0 ? 10 : limit;
+        List<String> result = safe("topPopularProductIds", () -> {
+            Set<String> ids = redis.opsForZSet().reverseRange(todayPopularKey(), 0, n - 1);
+            return ids == null ? Collections.<String>emptyList() : new ArrayList<>(ids);
+        });
+        return result == null ? Collections.emptyList() : result;
+    }
+
+    private static String todayPopularKey() {
+        return KEY_POPULAR_PFX + LocalDate.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_LOCAL_DATE);
     }
 
     // ---------- private helpers ----------
