@@ -115,7 +115,6 @@ api.interceptors.response.use(
     const requestUrl = original?.url ?? '';
     const silent = original?._silent === true;
 
-    // 401 → refresh + retry (auth endpoint'leri hariç)
     if (status === 401 && original && !original._retry && !isAuthEndpoint(requestUrl)) {
       const hasRefreshToken = !!getRefreshToken();
       if (hasRefreshToken) {

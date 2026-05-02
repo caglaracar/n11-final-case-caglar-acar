@@ -102,7 +102,6 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const requestUrl = original?.url ?? '';
 
-    // 1) 401 → tek bir refresh denemesi
     if (status === 401 && original && !original._retry && !isAuthEndpoint(requestUrl)) {
       const hasRefreshToken = !!useAuthStore.getState().refreshToken;
       if (hasRefreshToken) {
