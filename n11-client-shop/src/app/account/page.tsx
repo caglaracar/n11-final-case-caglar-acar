@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { useAuthStore } from '@/features/auth/store';
 import { useLogout } from '@/features/auth/hooks/useAuth';
+import { useAuthHydrated } from '@/features/auth/hooks/useAuthHydrated';
 
 const TILES = [
   { href: '/account/orders', icon: Package, title: 'Siparişlerim', desc: 'Geçmiş ve aktif siparişlerin' },
@@ -20,12 +21,13 @@ export default function AccountPage() {
   const user = useAuthStore((s) => s.user);
   const tokens = useAuthStore((s) => s.tokens);
   const logout = useLogout();
+  const hydrated = useAuthHydrated();
 
   useEffect(() => {
-    if (!tokens) router.replace('/auth?tab=login');
-  }, [tokens, router]);
+    if (hydrated && !tokens) router.replace('/auth?tab=login');
+  }, [hydrated, tokens, router]);
 
-  if (!user) return null;
+  if (!hydrated || !user) return null;
   const greeting = user.name?.trim() || user.userName;
 
   return (
