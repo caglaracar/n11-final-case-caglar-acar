@@ -1,12 +1,21 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Percent, Timer, Undo2, Zap } from 'lucide-react';
+import { Pencil, Timer, Zap } from 'lucide-react';
 import { PageHeader } from '@/shared/components/layout/PageHeader';
 import { Card } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Badge } from '@/shared/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
+import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
 import { DataTable, type DataTableColumn } from '@/shared/components/data-table/DataTable';
 import { SearchInput } from '@/shared/components/data-table/SearchInput';
 import { productApi } from '@/features/products/api/productApi';
@@ -17,14 +26,12 @@ type Filter = 'all' | 'active' | 'inactive';
 
 const KEY = ['products', 'flash-deals'] as const;
 
-/** datetime-local input → ISO (UTC). */
 function toIso(local: string): string | null {
   if (!local) return null;
   const d = new Date(local);
   return Number.isNaN(d.getTime()) ? null : d.toISOString();
 }
 
-/** ISO → datetime-local input value (local timezone). */
 function toLocalInput(iso?: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -33,13 +40,23 @@ function toLocalInput(iso?: string | null): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function refPrice(p: Product) {
+  return p.originalPrice && p.originalPrice > p.price ? p.originalPrice : p.price;
+}
+
 export function FlashDealsPage() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
   const [page, setPage] = useState(0);
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [priceDrafts, setPriceDrafts] = useState<Record<string, string>>({});
+
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [endsLocal, setEndsLocal] = useState('');
+  const [pct, setPct] = useState<number | null>(null);
+  const [manualPrice, setManualPrice] = useState('');
+
+  const [endingDeal, setEndingDeal] = useState<Product | null>(null);
+  const [clearingDiscount, setClearingDiscount] = useState<Product | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: [...KEY, { page, q: search || undefined }],
@@ -55,7 +72,7 @@ export function FlashDealsPage() {
     },
   });
 
-  const clear = useMutation({
+  const clearDeal = useMutation({
     mutationFn: (id: string) => productApi.clearFlashDeal(id),
     onSuccess: () => {
       toast.success('Flash deal sonlandırıldı');
@@ -70,10 +87,7 @@ export function FlashDealsPage() {
       toast.success('İndirim uygulandı');
       qc.invalidateQueries({ queryKey: KEY });
     },
-    onError: (err: unknown) => {
-      const msg = err instanceof Error ? err.message : 'İndirim uygulanamadı';
-      toast.error(msg);
-    },
+    onError: (err: unknown) => toast.error(err instanceof Error ? err.message : 'İndirim uygulanamadı'),
   });
 
   const clearDrop = useMutation({
@@ -98,39 +112,60 @@ export function FlashDealsPage() {
     [data],
   );
 
-  const quickStart = (p: Product, hours: number) => {
-    const endsAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
-    setDeal.mutate({ id: p.id, endsAt });
+  const openEditor = (p: Product) => {
+    setEditing(p);
+    setEndsLocal(toLocalInput(p.flashDealEndsAt));
+    setPct(null);
+    setManualPrice('');
   };
 
-  const saveDraft = (p: Product) => {
-    const iso = toIso(drafts[p.id] ?? '');
-    if (!iso) {
-      toast.error('Geçerli bir tarih seç');
-      return;
+  const computedNewPrice = (() => {
+    if (!editing) return null;
+    if (pct != null) {
+      const ref = refPrice(editing);
+      return Math.round(ref * (1 - pct / 100) * 100) / 100;
     }
-    setDeal.mutate({ id: p.id, endsAt: iso });
+    if (manualPrice) {
+      const n = Number(manualPrice);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  })();
+
+  const setQuickEnd = (hours: number) => {
+    const d = new Date(Date.now() + hours * 3600 * 1000);
+    setEndsLocal(toLocalInput(d.toISOString()));
   };
 
-  const quickDiscount = (p: Product, pct: number) => {
-    const ref = p.originalPrice ?? p.price;
-    const newPrice = Math.round(ref * (1 - pct / 100) * 100) / 100;
-    if (newPrice <= 0 || newPrice >= ref) {
-      toast.error('Geçersiz indirim');
-      return;
-    }
-    applyDrop.mutate({ id: p.id, price: newPrice, originalPrice: ref });
-  };
+  const submitEditor = async () => {
+    if (!editing) return;
+    const tasks: Promise<unknown>[] = [];
 
-  const saveDiscount = (p: Product) => {
-    const raw = priceDrafts[p.id];
-    const newPrice = raw ? Number(raw) : NaN;
-    const ref = p.originalPrice ?? p.price;
-    if (!Number.isFinite(newPrice) || newPrice <= 0 || newPrice >= ref) {
-      toast.error(`Yeni fiyat ${ref}₺'den küçük olmalı`);
+    if (endsLocal) {
+      const iso = toIso(endsLocal);
+      if (!iso) {
+        toast.error('Geçerli bir bitiş tarihi gir');
+        return;
+      }
+      tasks.push(setDeal.mutateAsync({ id: editing.id, endsAt: iso }));
+    }
+
+    if (computedNewPrice != null) {
+      const ref = refPrice(editing);
+      if (computedNewPrice <= 0 || computedNewPrice >= ref) {
+        toast.error(`Yeni fiyat ${ref}₺'den küçük olmalı`);
+        return;
+      }
+      tasks.push(applyDrop.mutateAsync({ id: editing.id, price: computedNewPrice, originalPrice: ref }));
+    }
+
+    if (tasks.length === 0) {
+      toast.error('Bitiş tarihi veya indirim seç');
       return;
     }
-    applyDrop.mutate({ id: p.id, price: newPrice, originalPrice: ref });
+
+    await Promise.all(tasks);
+    setEditing(null);
   };
 
   const columns: DataTableColumn<Product>[] = [
@@ -151,7 +186,10 @@ export function FlashDealsPage() {
         </div>
       ),
     },
-    { key: 'price', header: 'Fiyat', cell: (p) => {
+    {
+      key: 'price',
+      header: 'Fiyat',
+      cell: (p) => {
         const cur = p.currency ?? 'TRY';
         if (p.originalPrice && p.originalPrice > p.price) {
           return (
@@ -208,7 +246,7 @@ export function FlashDealsPage() {
               type="button"
               onClick={() => setFilter(f)}
               className={`px-3 py-2 text-sm transition ${
-                filter === f ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
+                filter === f ? 'bg-brand text-white' : 'hover:bg-accent/40'
               }`}
             >
               {f === 'all' ? 'Hepsi' : f === 'active' ? 'Aktif' : 'Pasif'}
@@ -223,71 +261,34 @@ export function FlashDealsPage() {
         isLoading={isLoading}
         rowKey={(p) => p.id}
         actions={(p) => {
-          const draft = drafts[p.id] ?? toLocalInput(p.flashDealEndsAt);
-          const priceDraft = priceDrafts[p.id] ?? '';
-          const busy = setDeal.isPending || clear.isPending || applyDrop.isPending || clearDrop.isPending;
+          const hasDeal = !!p.flashDealEndsAt;
           const hasDiscount = !!p.originalPrice && p.originalPrice > p.price;
           return (
-            <div className="flex flex-col items-end gap-1">
-              <div className="flex items-center gap-1">
-                <Input
-                  type="datetime-local"
-                  value={draft}
-                  onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
-                  className="h-8 w-44 text-xs"
-                />
-                <Button size="sm" variant="ghost" disabled={busy} onClick={() => quickStart(p, 6)}>
-                  +6s
+            <div className="flex items-center justify-end gap-2">
+              <Button size="sm" variant="outline" onClick={() => openEditor(p)} className="gap-1">
+                <Pencil className="h-3.5 w-3.5" />
+                Düzenle
+              </Button>
+              {hasDeal && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Kampanyayı sonlandır"
+                  onClick={() => setEndingDeal(p)}
+                >
+                  <Timer className="h-3.5 w-3.5" />
                 </Button>
-                <Button size="sm" variant="ghost" disabled={busy} onClick={() => quickStart(p, 24)}>
-                  +24s
+              )}
+              {hasDiscount && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="İndirimi kaldır"
+                  onClick={() => setClearingDiscount(p)}
+                >
+                  -%
                 </Button>
-                <Button size="sm" disabled={busy || !drafts[p.id]} onClick={() => saveDraft(p)}>
-                  <Zap className="h-3.5 w-3.5" />
-                </Button>
-                {p.flashDealEndsAt && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => clear.mutate(p.id)}
-                  >
-                    <Timer className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-              <div className="flex items-center gap-1">
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Yeni fiyat"
-                  value={priceDraft}
-                  onChange={(e) => setPriceDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
-                  className="h-8 w-28 text-xs"
-                />
-                <Button size="sm" variant="ghost" disabled={busy} onClick={() => quickDiscount(p, 10)}>
-                  -%10
-                </Button>
-                <Button size="sm" variant="ghost" disabled={busy} onClick={() => quickDiscount(p, 20)}>
-                  -%20
-                </Button>
-                <Button size="sm" variant="ghost" disabled={busy} onClick={() => quickDiscount(p, 30)}>
-                  -%30
-                </Button>
-                <Button size="sm" disabled={busy || !priceDraft} onClick={() => saveDiscount(p)}>
-                  <Percent className="h-3.5 w-3.5" />
-                </Button>
-                {hasDiscount && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => clearDrop.mutate(p.id)}
-                  >
-                    <Undo2 className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           );
         }}
@@ -301,6 +302,125 @@ export function FlashDealsPage() {
               }
             : undefined
         }
+      />
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-brand" />
+              Flash Fırsat Düzenle
+            </DialogTitle>
+            <DialogDescription>
+              {editing?.name} — Liste fiyatı:{' '}
+              <span className="font-semibold text-foreground">
+                {editing && formatCurrency(refPrice(editing), editing.currency ?? 'TRY')}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            <div>
+              <p className="mb-2 text-sm font-medium">Kampanya bitiş zamanı</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  type="datetime-local"
+                  value={endsLocal}
+                  onChange={(e) => setEndsLocal(e.target.value)}
+                  className="h-9 w-56"
+                />
+                <Button type="button" size="sm" variant="outline" onClick={() => setQuickEnd(6)}>+6 saat</Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => setQuickEnd(24)}>+24 saat</Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => setQuickEnd(72)}>+3 gün</Button>
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <p className="mb-2 text-sm font-medium">İndirim oranı (opsiyonel)</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[10, 20, 30, 40, 50, 60].map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => {
+                      setPct(v);
+                      setManualPrice('');
+                    }}
+                    className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                      pct === v
+                        ? 'border-brand bg-brand text-white'
+                        : 'hover:border-brand/40 hover:bg-brand/5'
+                    }`}
+                  >
+                    -%{v}
+                  </button>
+                ))}
+              </div>
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="veya manuel yeni fiyat"
+                value={manualPrice}
+                onChange={(e) => {
+                  setManualPrice(e.target.value);
+                  setPct(null);
+                }}
+                className="mt-3"
+              />
+            </div>
+
+            {computedNewPrice != null && editing && (
+              <div className="rounded-lg border border-brand/30 bg-brand/5 p-3 text-sm">
+                <p className="text-muted-foreground">Yeni fiyat önizleme</p>
+                <p className="mt-1 flex items-baseline gap-2">
+                  <span className="text-lg font-bold text-brand">
+                    {formatCurrency(computedNewPrice, editing.currency ?? 'TRY')}
+                  </span>
+                  <span className="text-xs text-muted-foreground line-through">
+                    {formatCurrency(refPrice(editing), editing.currency ?? 'TRY')}
+                  </span>
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setEditing(null)} disabled={setDeal.isPending || applyDrop.isPending}>
+              İptal
+            </Button>
+            <Button
+              onClick={submitEditor}
+              disabled={setDeal.isPending || applyDrop.isPending}
+              className="bg-brand text-white hover:bg-brand/90"
+            >
+              {setDeal.isPending || applyDrop.isPending ? 'Uygulanıyor…' : 'Kaydet'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={!!endingDeal}
+        onOpenChange={(o) => !o && setEndingDeal(null)}
+        title="Flash kampanyayı sonlandır"
+        description={endingDeal ? `${endingDeal.name} ürününün flash kampanyası sonlandırılacak.` : ''}
+        confirmText="Sonlandır"
+        variant="destructive"
+        onConfirm={async () => {
+          if (endingDeal) await clearDeal.mutateAsync(endingDeal.id);
+        }}
+      />
+
+      <ConfirmDialog
+        open={!!clearingDiscount}
+        onOpenChange={(o) => !o && setClearingDiscount(null)}
+        title="İndirimi kaldır"
+        description={clearingDiscount ? `${clearingDiscount.name} ürünündeki indirim göstergesi kaldırılacak.` : ''}
+        confirmText="Kaldır"
+        variant="destructive"
+        onConfirm={async () => {
+          if (clearingDiscount) await clearDrop.mutateAsync(clearingDiscount.id);
+        }}
       />
     </>
   );
