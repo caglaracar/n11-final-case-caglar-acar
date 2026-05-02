@@ -19,7 +19,8 @@ spring:
               - "http://localhost:5173"
               - "http://localhost:5174"
               - "http://localhost:3000"
-              - "https://n11-admin.vercel.app"
+              - "https://sepetify-admin.vercel.app"
+              - "https://sepetify-shop.vercel.app"
             allowedMethods:
               - GET
               - POST
