@@ -1,13 +1,14 @@
 package com.caglar.payment.dto.response;
 
-import lombok.Builder;
+import com.caglar.payment.enums.PaymentStatus;
 
-@Builder
 public record PaymentResponseDto(
+        Long id,
         Long orderId,
-        Long paymentId,
-        boolean success,
-        String providerRef,
+        Double amount,
+        String currency,
+        PaymentStatus status,
+        String iyzicoPaymentId,
         String failReason,
-        String status
+        Long createdAt
 ) {}

@@ -12,8 +12,12 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
   kafka:
-    bootstrap-servers: localhost:9094
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9094}
     consumer:
       group-id: payment-service
       auto-offset-reset: earliest
@@ -22,45 +26,35 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      acks: all          # Tüm replica'lar onaylamalı
+      acks: all
       retries: 3
       properties:
-        enable.idempotence: true   # Producer idempotency — mükerrer event engeller
+        enable.idempotence: true
         max.in.flight.requests.per.connection: 5
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
 
-# ──────────────────────────────────────────────────────────────────
-# payment.provider: mock | iyzico
-# ──────────────────────────────────────────────────────────────────
-# Payment Provider Strategy:
-#   mock   → Otomatik saga consumer, %100 başarı (development / demo / ödev için)
-#   iyzico → Frontend /payment/checkout endpoint'i + gerçek İyzico sandbox
-#            (Geçerli IYZICO_API_KEY / IYZICO_SECRET_KEY env'leri gerekir.
-#             Sandbox merchant kaydı: https://sandbox-merchant.iyzipay.com/auth/register)
-# ──────────────────────────────────────────────────────────────────
 app:
   security:
     mode: open
 
-payment:
-  provider: ${PAYMENT_PROVIDER:mock}
-  mock:
-    success-rate: 1.0   # Test: her zaman başarılı
-
 iyzico:
-  api-key:    ${IYZICO_API_KEY:sandbox-REPLACE-ME}
-  secret-key: ${IYZICO_SECRET_KEY:sandbox-REPLACE-ME}
-  base-url:   ${IYZICO_BASE_URL:https://sandbox-api.iyzipay.com}
+  api-key:          ${IYZICO_API_KEY:sandbox-6WzXl3t6CTSwQlQ5WWmvom7N64Wjo1tR}
+  secret-key:       ${IYZICO_SECRET_KEY:sandbox-DbJPjQdBHRHTd3rpUCnAPqfzBcP6LeAh}
+  base-url:         ${IYZICO_BASE_URL:https://sandbox-api.iyzipay.com}
+  callback-url:     ${IYZICO_CALLBACK_URL:http://localhost:9095/dev/v1/payment/iyzico/callback}
+  success-redirect: ${IYZICO_SUCCESS_REDIRECT:http://localhost:3000/orders/{orderId}/result}
+  failure-redirect: ${IYZICO_FAILURE_REDIRECT:http://localhost:3000/orders/{orderId}/result}
 
 openapi:
   title: Payment Service API
   version: v1
+  description: İyzico ödeme akışı
 
 management:
   endpoints:
