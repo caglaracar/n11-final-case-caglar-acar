@@ -53,33 +53,29 @@ class OrderServiceImplTest {
 
     private static final Long AUTH_ID = 1L;
 
+    // ─── Checkout ────────────────────────────────────────────────
+
     @Test
-    void checkout_createsOrderAndReturnsPaymentUrl() {
-        BasketDto basket = new BasketDto(AUTH_ID, List.of(new BasketDto.Item("p1", "Laptop", 1, 999.0)), 999.0);
-        UserProfileDto profile = profile(AUTH_ID, "user@mail.com");
-        AddressDto address = address("addr-1", "İstanbul");
-
-        given(basketClient.getMyBasket()).willReturn(BaseResponse.success(basket));
-        given(userClient.me()).willReturn(BaseResponse.success(profile));
-        given(userClient.myAddresses()).willReturn(BaseResponse.success(List.of(address)));
-
-        Order savedOrder = buildOrder(10L, AUTH_ID, OrderStatus.PENDING, 999.0);
-        given(orderRepository.save(any())).willReturn(savedOrder);
-
-        InitCheckoutResponse paymentResp = new InitCheckoutResponse(1L, 10L, "https://pay.iyzico.com", "tok123");
-        given(paymentClient.initiate(any())).willReturn(BaseResponse.success(paymentResp));
+    void checkout_createsOrderAndReturnsPaymentPageUrl() {
+        given(basketClient.getMyBasket()).willReturn(BaseResponse.success(
+                basket(List.of(new BasketDto.Item("p1", "Laptop", 1, 999.0)), 999.0)));
+        given(userClient.me()).willReturn(BaseResponse.success(profile("user@mail.com")));
+        given(userClient.myAddresses()).willReturn(BaseResponse.success(List.of(address("addr-1"))));
+        given(orderRepository.save(any())).willReturn(buildOrder(10L, AUTH_ID, OrderStatus.PENDING, 999.0));
+        given(paymentClient.initiate(any())).willReturn(BaseResponse.success(
+                new InitCheckoutResponse(1L, 10L, "https://pay.iyzico.com/page", "tok123")));
 
         CheckoutResponseDto result = service.checkout(AUTH_ID, new CheckoutRequestDto("addr-1", "127.0.0.1"));
 
         assertThat(result.orderId()).isEqualTo(10L);
-        assertThat(result.paymentPageUrl()).isEqualTo("https://pay.iyzico.com");
+        assertThat(result.paymentPageUrl()).isEqualTo("https://pay.iyzico.com/page");
         assertThat(result.paymentToken()).isEqualTo("tok123");
     }
 
     @Test
     void checkout_throwsException_whenBasketIsEmpty() {
-        BasketDto emptyBasket = new BasketDto(AUTH_ID, List.of(), 0.0);
-        given(basketClient.getMyBasket()).willReturn(BaseResponse.success(emptyBasket));
+        given(basketClient.getMyBasket()).willReturn(BaseResponse.success(
+                basket(List.of(), 0.0)));
 
         assertThatThrownBy(() -> service.checkout(AUTH_ID, new CheckoutRequestDto("addr-1", "127.0.0.1")))
                 .isInstanceOf(BusinessException.class)
@@ -87,40 +83,46 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void checkout_throwsException_whenAddressNotFound() {
-        BasketDto basket = new BasketDto(AUTH_ID, List.of(new BasketDto.Item("p1", "Laptop", 1, 100.0)), 100.0);
-        UserProfileDto profile = profile(AUTH_ID, "user@mail.com");
-        AddressDto otherAddress = address("other-addr", "Ankara");
+    void checkout_throwsException_whenTotalExceedsHundredThousand() {
+        // 100.000 TRY ve üzeri sipariş kabul edilmemelidir
+        given(basketClient.getMyBasket()).willReturn(BaseResponse.success(
+                basket(List.of(new BasketDto.Item("p1", "Araba", 1, 99_999.99)), 99_999.99)));
 
-        given(basketClient.getMyBasket()).willReturn(BaseResponse.success(basket));
-        given(userClient.me()).willReturn(BaseResponse.success(profile));
-        given(userClient.myAddresses()).willReturn(BaseResponse.success(List.of(otherAddress)));
+        assertThatThrownBy(() -> service.checkout(AUTH_ID, new CheckoutRequestDto("addr-1", "127.0.0.1")))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("100.000");
+    }
+
+    @Test
+    void checkout_throwsException_whenDeliveryAddressNotInUserAddresses() {
+        given(basketClient.getMyBasket()).willReturn(BaseResponse.success(
+                basket(List.of(new BasketDto.Item("p1", "Laptop", 1, 100.0)), 100.0)));
+        given(userClient.me()).willReturn(BaseResponse.success(profile("user@mail.com")));
+        given(userClient.myAddresses()).willReturn(BaseResponse.success(
+                List.of(address("different-addr"))));
 
         assertThatThrownBy(() -> service.checkout(AUTH_ID, new CheckoutRequestDto("addr-1", "127.0.0.1")))
                 .isInstanceOf(BusinessException.class);
     }
 
     @Test
-    void checkout_rollsBackAndThrows_whenStockReserveFails() {
-        BasketDto basket = new BasketDto(AUTH_ID, List.of(new BasketDto.Item("p1", "Laptop", 1, 100.0)), 100.0);
-        UserProfileDto profile = profile(AUTH_ID, "user@mail.com");
-        AddressDto address = address("addr-1", "İstanbul");
-
-        given(basketClient.getMyBasket()).willReturn(BaseResponse.success(basket));
-        given(userClient.me()).willReturn(BaseResponse.success(profile));
-        given(userClient.myAddresses()).willReturn(BaseResponse.success(List.of(address)));
-
-        Order savedOrder = buildOrder(10L, AUTH_ID, OrderStatus.PENDING, 100.0);
-        given(orderRepository.save(any())).willReturn(savedOrder);
-        willThrow(new RuntimeException("Stok yok")).given(stockClient).reserve(any());
+    void checkout_rollsBackOrderAndReleasesStock_whenPaymentInitFails() {
+        given(basketClient.getMyBasket()).willReturn(BaseResponse.success(
+                basket(List.of(new BasketDto.Item("p1", "Laptop", 1, 100.0)), 100.0)));
+        given(userClient.me()).willReturn(BaseResponse.success(profile("user@mail.com")));
+        given(userClient.myAddresses()).willReturn(BaseResponse.success(List.of(address("addr-1"))));
+        given(orderRepository.save(any())).willReturn(buildOrder(10L, AUTH_ID, OrderStatus.PENDING, 100.0));
+        willThrow(new RuntimeException("Stok rezerve edilemedi")).given(stockClient).reserve(any());
 
         assertThatThrownBy(() -> service.checkout(AUTH_ID, new CheckoutRequestDto("addr-1", "127.0.0.1")))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Stok");
     }
 
+    // ─── Sipariş sorgulama ───────────────────────────────────────
+
     @Test
-    void getById_returnsOrder_whenOwnedByUser() {
+    void getById_returnsOrderDto_whenBelongsToUser() {
         Order order = buildOrder(5L, AUTH_ID, OrderStatus.PAID, 200.0);
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
 
@@ -128,10 +130,11 @@ class OrderServiceImplTest {
 
         assertThat(result.id()).isEqualTo(5L);
         assertThat(result.status()).isEqualTo(OrderStatus.PAID);
+        assertThat(result.totalAmount()).isEqualTo(200.0);
     }
 
     @Test
-    void getById_throwsException_whenOrderBelongsToOtherUser() {
+    void getById_throwsException_whenOrderBelongsToDifferentUser() {
         Order order = buildOrder(5L, 99L, OrderStatus.PAID, 200.0);
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
 
@@ -140,20 +143,22 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void getMyOrders_returnsAllOrdersForUser() {
-        List<Order> orders = List.of(
-                buildOrder(1L, AUTH_ID, OrderStatus.PAID, 100.0),
-                buildOrder(2L, AUTH_ID, OrderStatus.PENDING, 200.0)
-        );
-        given(orderRepository.findByAuthIdOrderByIdDesc(AUTH_ID)).willReturn(orders);
+    void getMyOrders_returnsOrdersSortedDescendingByDefault() {
+        given(orderRepository.findByAuthIdOrderByIdDesc(AUTH_ID)).willReturn(List.of(
+                buildOrder(3L, AUTH_ID, OrderStatus.PAID, 300.0),
+                buildOrder(1L, AUTH_ID, OrderStatus.CANCELLED, 100.0)
+        ));
 
         List<OrderResponseDto> result = service.getMyOrders(AUTH_ID);
 
         assertThat(result).hasSize(2);
+        assertThat(result.get(0).id()).isEqualTo(3L); // en yeni önce
     }
 
+    // ─── İptal ───────────────────────────────────────────────────
+
     @Test
-    void cancel_setsCancelledStatus_andReleasesStock() {
+    void cancel_setsCancelledAndReleasesReservedStock() {
         Order order = buildOrder(5L, AUTH_ID, OrderStatus.PENDING, 100.0);
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
         given(orderRepository.save(any())).willReturn(order);
@@ -165,7 +170,7 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void cancel_throwsException_whenAlreadyCancelled() {
+    void cancel_throwsException_whenOrderAlreadyCancelled() {
         Order order = buildOrder(5L, AUTH_ID, OrderStatus.CANCELLED, 100.0);
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
 
@@ -174,7 +179,7 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void cancel_throwsException_whenOrderIsPaid() {
+    void cancel_throwsException_whenOrderAlreadyPaid() {
         Order order = buildOrder(5L, AUTH_ID, OrderStatus.PAID, 100.0);
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
 
@@ -182,8 +187,10 @@ class OrderServiceImplTest {
                 .isInstanceOf(BusinessException.class);
     }
 
+    // ─── Ödeme sonuçları ─────────────────────────────────────────
+
     @Test
-    void onPaymentCompleted_setsStatusPaidAndPublishesEvents() {
+    void onPaymentCompleted_marksOrderAsPaid_andClearsBasketAndNotifies() {
         Order order = buildOrder(5L, AUTH_ID, OrderStatus.PENDING, 100.0);
         order.setCustomerEmail("user@mail.com");
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
@@ -192,57 +199,59 @@ class OrderServiceImplTest {
         service.onPaymentCompleted(5L);
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
-        then(eventPublisher).should().publishOrderPlaced(any(OrderPlacedEvent.class));
-        then(eventPublisher).should().publishConfirmationEmail(any(), any(), any(), any());
+        then(basketClient).should().clear(AUTH_ID);                                  // sepet temizlenmeli
+        then(eventPublisher).should().publishOrderPlaced(any(OrderPlacedEvent.class)); // Kafka event
+        then(notificationClient).should().sendOrderConfirmed(any());                  // direkt bildirim
     }
 
     @Test
-    void onPaymentCompleted_ignoresEvent_whenNotPending() {
+    void onPaymentCompleted_isIdempotent_whenOrderAlreadyPaid() {
         Order order = buildOrder(5L, AUTH_ID, OrderStatus.PAID, 100.0);
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
 
-        service.onPaymentCompleted(5L);
+        service.onPaymentCompleted(5L); // ikinci kez tetiklense de bir şey yapmamalı
 
+        then(basketClient).shouldHaveNoInteractions();
         then(eventPublisher).shouldHaveNoInteractions();
     }
 
     @Test
-    void onPaymentFailed_setsStatusFailedAndReleasesStock() {
+    void onPaymentFailed_marksOrderAsFailedAndReleasesStock() {
         Order order = buildOrder(5L, AUTH_ID, OrderStatus.PENDING, 100.0);
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
         given(orderRepository.save(any())).willReturn(order);
 
-        service.onPaymentFailed(5L, "Kart reddedildi");
+        service.onPaymentFailed(5L, "Kart limiti yetersiz");
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.FAILED);
         then(stockClient).should().release(any());
     }
 
+    // ─── Admin ───────────────────────────────────────────────────
+
     @Test
-    void adminGetOrders_returnsPagedOrders_withoutStatusFilter() {
-        List<Order> orders = List.of(buildOrder(1L, AUTH_ID, OrderStatus.PAID, 100.0));
+    void adminGetOrders_returnsPagedResults_withoutFilter() {
         given(orderRepository.findAllByOrderByIdDesc(any(Pageable.class)))
-                .willReturn(new PageImpl<>(orders));
+                .willReturn(new PageImpl<>(List.of(buildOrder(1L, AUTH_ID, OrderStatus.PAID, 100.0))));
 
         Page<OrderResponseDto> result = service.adminGetOrders(0, 20, null);
 
-        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent().get(0).status()).isEqualTo(OrderStatus.PAID);
     }
 
     @Test
-    void adminGetOrders_returnsPagedOrders_withStatusFilter() {
-        List<Order> orders = List.of(buildOrder(1L, AUTH_ID, OrderStatus.PENDING, 100.0));
+    void adminGetOrders_filtersResultsByStatus() {
         given(orderRepository.findAllByStatusOrderByIdDesc(any(OrderStatus.class), any(Pageable.class)))
-                .willReturn(new PageImpl<>(orders));
+                .willReturn(new PageImpl<>(List.of(buildOrder(1L, AUTH_ID, OrderStatus.PENDING, 100.0))));
 
         Page<OrderResponseDto> result = service.adminGetOrders(0, 20, OrderStatus.PENDING);
 
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getContent().get(0).status()).isEqualTo(OrderStatus.PENDING);
+        assertThat(result.getContent()).allMatch(o -> o.status() == OrderStatus.PENDING);
     }
 
     @Test
-    void adminUpdateStatus_updatesAndReturnsOrder() {
+    void adminUpdateStatus_transitionsOrderToNewStatus() {
         Order order = buildOrder(5L, AUTH_ID, OrderStatus.PAID, 100.0);
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
         given(orderRepository.save(any())).willReturn(order);
@@ -250,27 +259,35 @@ class OrderServiceImplTest {
         OrderResponseDto result = service.adminUpdateStatus(5L, OrderStatus.SHIPPED);
 
         assertThat(result.status()).isEqualTo(OrderStatus.SHIPPED);
+        then(orderRepository).should().save(order);
     }
 
-    // helpers
+    // ─── Helpers ─────────────────────────────────────────────────
+
     private Order buildOrder(Long id, Long authId, OrderStatus status, double total) {
         Order order = Order.builder()
                 .authId(authId)
                 .totalAmount(total)
                 .currency("TRY")
                 .status(status)
-                .shippingAddress("Test Adres")
+                .shippingAddress("Test Cad. No:1")
                 .shippingCity("İstanbul")
                 .build();
         order.setId(id);
         return order;
     }
 
-    private UserProfileDto profile(Long authId, String email) {
-        return new UserProfileDto("uid-1", authId, "testuser", "Ad", "Soyad", email, "+905551112233", null, "USER");
+    private BasketDto basket(List<BasketDto.Item> items, double total) {
+        return new BasketDto(AUTH_ID, items, total);
     }
 
-    private AddressDto address(String id, String city) {
-        return new AddressDto(id, "Ev", "Ad Soyad", "+905551112233", "Cadde No:1", null, city, "İstanbul", "34000", "Türkiye", true);
+    private UserProfileDto profile(String email) {
+        return new UserProfileDto("uid-1", AUTH_ID, "caglar", "Çağlar", "Acar",
+                email, "+905551112233", null, "USER");
+    }
+
+    private AddressDto address(String id) {
+        return new AddressDto(id, "Ev", "Çağlar Acar", "+905551112233",
+                "Atatürk Cad. No:1", null, "İstanbul", "Kadıköy", "34700", "Türkiye", true);
     }
 }
