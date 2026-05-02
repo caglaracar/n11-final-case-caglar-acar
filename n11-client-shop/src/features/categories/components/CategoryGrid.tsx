@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Boxes } from 'lucide-react';
-import { categoryApi } from '@/features/categories/api/categoryApi';
+import { getAllCategories } from '@/features/categories/api/categoryApi';
+import type { Category } from '@/features/categories/types/categories-types';
 import { SectionHeader } from '@/shared/components/SectionHeader';
 
 const PALETTE = [
@@ -17,18 +18,29 @@ const PALETTE = [
   'from-slate-500/10 to-zinc-500/10 text-slate-700',
 ];
 
+async function loadVisibleCategories(): Promise<Category[]> {
+  try {
+    const allCategories = await getAllCategories();
+    return [...allCategories]
+      .filter((category) => category.visibleInNav !== false)
+      .sort((first, second) => (first.sortOrder ?? 0) - (second.sortOrder ?? 0));
+  } catch {
+    return [];
+  }
+}
+
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
 export function CategoryGrid() {
   const { data } = useQuery({
     queryKey: ['categories'],
-    queryFn: () =>
-      categoryApi
-        .findAll()
-        .then((cats) =>
-          [...cats]
-            .filter((c) => c.visibleInNav !== false)
-            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
-        )
-        .catch(() => []),
+    queryFn: loadVisibleCategories,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -45,31 +57,23 @@ export function CategoryGrid() {
       />
 
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-        {data.map((cat, i) => (
+        {data.map((category, index) => (
           <Link
-            key={cat.id}
-            href={`/products?category=${encodeURIComponent(cat.slug || cat.name)}`}
+            key={category.id}
+            href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
             className="group flex flex-col items-center gap-2 rounded-xl border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-sm"
           >
             <span
-              className={`grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br ${PALETTE[i % PALETTE.length]} text-xl transition-transform group-hover:scale-105`}
+              className={`grid h-12 w-12 place-items-center rounded-full bg-gradient-to-br ${PALETTE[index % PALETTE.length]} text-xl transition-transform group-hover:scale-105`}
             >
-              {cat.iconClass ? <i className={cat.iconClass} /> : initials(cat.name)}
+              {category.iconClass ? <i className={category.iconClass} /> : getInitials(category.name)}
             </span>
             <p className="line-clamp-2 text-center text-xs font-semibold leading-tight">
-              {cat.name}
+              {category.name}
             </p>
           </Link>
         ))}
       </div>
     </section>
   );
-}
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('');
 }

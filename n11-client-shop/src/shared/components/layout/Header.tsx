@@ -10,8 +10,9 @@ import { Input } from '@/shared/components/ui/input';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { useCartStore } from '@/features/cart/store';
-import { categoryApi } from '@/features/categories/api/categoryApi';
-import { productApi } from '@/features/products/api/productApi';
+import { getAllCategories } from '@/features/categories/api/categoryApi';
+import type { Category } from '@/features/categories/types/categories-types';
+import { getTrendingSearchTerms } from '@/features/products/api/productApi';
 import { cn } from '@/shared/lib/utils';
 
 export function Header() {
@@ -22,11 +23,10 @@ export function Header() {
   const { data: categories = [] } = useQuery({
     queryKey: ['nav-categories'],
     queryFn: () =>
-      categoryApi
-        .findAll()
-        .then((cats) =>
+      getAllCategories()
+        .then((cats: Category[]) =>
           [...cats]
-            .filter((c) => c.visibleInNav !== false)
+            .filter((category) => category.visibleInNav !== false)
             .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)),
         )
         .catch(() => []),
@@ -39,7 +39,7 @@ export function Header() {
 
   const { data: trending = [] } = useQuery({
     queryKey: ['search', 'trending', 10],
-    queryFn: () => productApi.trending(10).catch(() => []),
+    queryFn: () => getTrendingSearchTerms(10).catch(() => []),
     staleTime: 0,
     refetchOnMount: 'always',
   });
@@ -139,13 +139,13 @@ export function Header() {
           >
             Tümü
           </Link>
-          {categories.slice(0, 4).map((c) => (
+           {categories.slice(0, 4).map((category) => (
             <Link
-              key={c.id}
-              href={`/products?category=${encodeURIComponent(c.slug || c.name)}`}
+              key={category.id}
+              href={`/products?category=${encodeURIComponent(category.slug || category.name)}`}
               className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
             >
-              {c.name}
+              {category.name}
             </Link>
           ))}
         </nav>

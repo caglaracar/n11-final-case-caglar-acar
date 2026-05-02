@@ -6,8 +6,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, CheckCircle2, ShoppingBag, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { addressApi } from '@/features/addresses/api/addressApi';
-import type { Address, AddressInput } from '@/features/addresses/types';
+import {
+  createAddress,
+  deleteAddress,
+  getMyAddresses,
+  setDefaultAddress,
+} from '@/features/addresses/api/addressApi';
+import type { Address, AddressInput } from '@/features/addresses/types/addresses-types';
 import { extractErrorMessage } from '@/shared/lib/api/client';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -41,14 +46,14 @@ function AddressesPageInner() {
   const fromCheckout = searchParams.get('from') === 'checkout';
   const [form, setForm] = useState<AddressInput>(EMPTY_FORM);
 
-  const addressesQuery = useQuery({ queryKey: ['addresses'], queryFn: addressApi.list });
+  const addressesQuery = useQuery({ queryKey: ['addresses'], queryFn: getMyAddresses });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['addresses'] });
 
   const goBackToCheckout = () => router.push('/checkout');
 
   const createMutation = useMutation({
-    mutationFn: (payload: AddressInput) => addressApi.create(payload),
+    mutationFn: (payload: AddressInput) => createAddress(payload),
     onSuccess: () => {
       toast.success(fromCheckout ? 'Adres eklendi, ödemeye dönüyorsun' : 'Adres eklendi');
       setForm(EMPTY_FORM);
@@ -59,7 +64,7 @@ function AddressesPageInner() {
   });
 
   const removeMutation = useMutation({
-    mutationFn: (id: string) => addressApi.remove(id),
+    mutationFn: (id: string) => deleteAddress(id),
     onSuccess: () => {
       toast.success('Adres silindi');
       invalidate();
@@ -68,7 +73,7 @@ function AddressesPageInner() {
   });
 
   const setDefaultMutation = useMutation({
-    mutationFn: (id: string) => addressApi.setDefault(id),
+    mutationFn: (id: string) => setDefaultAddress(id),
     onSuccess: () => {
       toast.success('Varsayılan adres güncellendi');
       invalidate();
@@ -77,7 +82,7 @@ function AddressesPageInner() {
   });
 
   const selectAndContinueMutation = useMutation({
-    mutationFn: (id: string) => addressApi.setDefault(id),
+    mutationFn: (id: string) => setDefaultAddress(id),
     onSuccess: () => {
       toast.success('Adres seçildi, ödemeye dönüyorsun');
       invalidate();

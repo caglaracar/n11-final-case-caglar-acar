@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Package } from 'lucide-react';
 
-import { orderApi } from '@/features/orders/api/orderApi';
+import { getMyOrders } from '@/features/orders/api/orderApi';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { formatCurrency } from '@/shared/lib/utils';
-import type { Order, OrderStatus } from '@/features/orders/types';
+import type { Order, OrderStatus } from '@/features/orders/types/orders-types';
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING: 'Ödeme bekleniyor',
@@ -31,7 +31,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 export default function OrdersPage() {
   const ordersQuery = useQuery({
     queryKey: ['orders', 'me'],
-    queryFn: orderApi.myOrders,
+    queryFn: getMyOrders,
   });
 
   if (ordersQuery.isLoading) {

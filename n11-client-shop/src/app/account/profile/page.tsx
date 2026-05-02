@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { profileApi, type UpdateProfilePayload, type UserProfile } from '@/features/profile/api/profileApi';
+import { getMyProfile, updateMyProfile } from '@/features/profile/api/profileApi';
+import type { UpdateProfilePayload, UserProfile } from '@/features/profile/types/profile-types';
 import { useAuthStore, type AuthUser } from '@/features/auth/store';
 import { useAuthHydrated } from '@/features/auth/hooks/useAuthHydrated';
 import { extractErrorMessage } from '@/shared/lib/api/client';
@@ -59,7 +60,7 @@ export default function ProfilePage() {
 
   const profileQuery = useQuery({
     queryKey: ['profile', 'me'],
-    queryFn: profileApi.me,
+    queryFn: getMyProfile,
     enabled: !!tokens,
   });
 
@@ -68,7 +69,7 @@ export default function ProfilePage() {
   }, [profileQuery.data]);
 
   const updateMutation = useMutation({
-    mutationFn: (payload: UpdateProfilePayload) => profileApi.update(payload),
+    mutationFn: (payload: UpdateProfilePayload) => updateMyProfile(payload),
     onSuccess: (updated) => {
       toast.success('Profilin güncellendi');
       setUser(profileToAuthUser(updated));

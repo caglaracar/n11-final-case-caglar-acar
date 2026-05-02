@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Minus, Plus, ShieldCheck, ShoppingCart, Truck, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { productApi } from '@/features/products/api/productApi';
+import { getProductById } from '@/features/products/api/productApi';
 import { useCartStore } from '@/features/cart/store';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -23,7 +23,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
-    queryFn: () => productApi.detail(id),
+    queryFn: () => getProductById(id),
   });
 
   const discount = useMemo(() => {
@@ -43,12 +43,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const outOfStock = product.stock <= 0;
   const maxQuantity = Math.max(1, product.stock);
 
-  const handleAddToCart = (): boolean => {
+  const handleAddToCart = async (): Promise<boolean> => {
     if (exceedsMaxAmount) {
       toast.error(MAX_PAYMENT_AMOUNT_MESSAGE);
       return false;
     }
-    add(
+    const ok = await add(
       {
         productId: product.id,
         name: product.name,
@@ -57,12 +57,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       },
       quantity,
     );
-    toast.success(quantity === 1 ? 'Sepete eklendi' : `${quantity} adet sepete eklendi`);
-    return true;
+    if (ok) {
+      toast.success(quantity === 1 ? 'Sepete eklendi' : `${quantity} adet sepete eklendi`);
+    }
+    return ok;
   };
 
-  const handleBuyNow = () => {
-    if (handleAddToCart()) {
+  const handleBuyNow = async () => {
+    if (await handleAddToCart()) {
       router.push('/checkout');
     }
   };
