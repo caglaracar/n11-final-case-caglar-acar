@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-@Tag(name = "Basket", description = "Sepet işlemleri (Redis)")
+@Tag(name = "Basket", description = "Sepet işlemleri (MongoDB)")
 public interface IBasketApi {
 
     @Operation(summary = "Mevcut kullanıcının sepetini getir")
