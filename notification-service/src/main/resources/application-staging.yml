@@ -8,17 +8,21 @@ spring:
       - org.springframework.boot.autoconfigure.mongo.MongoReactiveAutoConfiguration
       - org.springframework.boot.autoconfigure.data.mongo.MongoReactiveDataAutoConfiguration
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    listener:
-      auto-startup: false
-      missing-topics-fatal: false
-    admin:
-      fail-fast: false
-      auto-create: false
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: PLAIN
+      sasl.jaas.config: "org.apache.kafka.common.security.plain.PlainLoginModule required username='${KAFKA_API_KEY}' password='${KAFKA_API_SECRET}';"
     producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       properties:
-        max.block.ms: 5000
-        delivery.timeout.ms: 10000
+        spring.json.trusted.packages: "*"
   mail:
     host: ${MAIL_HOST:localhost}
     port: ${MAIL_PORT:1025}
