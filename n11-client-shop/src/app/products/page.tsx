@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronDown, Filter, X } from 'lucide-react';
@@ -13,6 +13,14 @@ import { cn } from '@/shared/lib/utils';
 const PAGE_SIZE = 24;
 
 export default function ProductsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ProductsPageInner />
+    </Suspense>
+  );
+}
+
+function ProductsPageInner() {
   const router = useRouter();
   const params = useSearchParams();
   const q = params.get('q') ?? undefined;
