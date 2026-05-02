@@ -95,6 +95,7 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
+        safeClearBasket(order.getAuthId());
         publishPaidEvents(order);
     }
 
@@ -192,6 +193,14 @@ public class OrderServiceImpl implements OrderService {
         Order order = findOrderOrThrow(id);
         order.setStatus(status);
         return OrderMapper.toResponse(orderRepository.save(order));
+    }
+
+    private void safeClearBasket(Long authId) {
+        try {
+            basketClient.clear(authId);
+        } catch (RuntimeException ex) {
+            log.warn("Basket clear failed authId={}: {}", authId, ex.getMessage());
+        }
     }
 
     private void safeReleaseStock(Order order) {
