@@ -26,4 +26,10 @@ public interface SearchStatsService {
 
     /** En çok aranan terimleri (azalan) döner. */
     List<TrendingTermResponseDto> topTerms(int limit);
+
+    /** Ürün detay görüntülendiğinde "bugünün popülerleri" sayacını +1 arttırır. */
+    void recordProductView(String productId);
+
+    /** Bugün en çok görüntülenen ürün id'lerini döner. */
+    List<String> topPopularProductIds(int limit);
 }

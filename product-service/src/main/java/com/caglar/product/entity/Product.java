@@ -58,13 +58,6 @@ public class Product extends BaseDocument {
     @Builder.Default
     private List<String> features = new ArrayList<>();
 
-    /** Review service tarafından güncellenir. */
-    @Builder.Default
-    private Double rating = 0d;
-
-    @Builder.Default
-    private Integer reviewCount = 0;
-
     private Long sellerAuthId;
 
     /** Detay sayfa görüntülenme sayacı. */
@@ -82,11 +75,10 @@ public class Product extends BaseDocument {
         this.viewCount = (viewCount == null ? 0L : viewCount) + 1L;
     }
 
-    /** PATCH semantiği. Yeni fiyat eskiden düşükse priceDropAt damgalanır. */
-    public void applyUpdate(String name, String description, Double price, Double originalPrice,
+    /** PATCH semantiği — yalnızca ürün içerik alanları. Fiyat düşüşü/flash deal ayrı endpoint'lerden yönetilir. */
+    public void applyUpdate(String name, String description, Double price,
                             String categoryId, String subcategory, String brand, Integer stock,
-                            String imageUrl, List<String> images, String badge, List<String> features,
-                            Instant flashDealEndsAt) {
+                            String imageUrl, List<String> images, String badge, List<String> features) {
         if (StringUtils.hasText(name)) {
             this.name = name;
         }
@@ -94,10 +86,7 @@ public class Product extends BaseDocument {
             this.description = description;
         }
         if (price != null) {
-            updatePrice(price);
-        }
-        if (originalPrice != null) {
-            this.originalPrice = originalPrice;
+            this.price = price;
         }
         if (StringUtils.hasText(categoryId)) {
             this.categoryId = categoryId;
@@ -123,15 +112,32 @@ public class Product extends BaseDocument {
         if (features != null) {
             this.features = new ArrayList<>(features);
         }
-        if (flashDealEndsAt != null) {
-            this.flashDealEndsAt = flashDealEndsAt;
-        }
     }
 
-    private void updatePrice(double newPrice) {
-        if (this.price != null && newPrice < this.price) {
-            this.priceDropAt = Instant.now();
+    /** Flash deal kampanyası başlat / uzat. */
+    public void startFlashDeal(Instant endsAt) {
+        this.flashDealEndsAt = endsAt;
+    }
+
+    /** Flash deal kampanyasını sonlandır. */
+    public void clearFlashDeal() {
+        this.flashDealEndsAt = null;
+    }
+
+    /** Fiyatı düşür. originalPrice verilmezse mevcut fiyat referans alınır. priceDropAt damgalanır. */
+    public void applyPriceDrop(double newPrice, Double newOriginalPrice) {
+        double reference = newOriginalPrice != null ? newOriginalPrice
+                : (this.originalPrice != null && this.originalPrice > 0 ? this.originalPrice : (this.price != null ? this.price : newPrice));
+        if (newPrice >= reference) {
+            throw new IllegalArgumentException("Yeni fiyat referans fiyattan düşük olmalı");
         }
+        this.originalPrice = reference;
         this.price = newPrice;
+        this.priceDropAt = Instant.now();
+    }
+
+    /** İndirim göstergesini kaldır (price'a dokunmadan originalPrice'ı temizler). */
+    public void clearPriceDrop() {
+        this.originalPrice = null;
     }
 }

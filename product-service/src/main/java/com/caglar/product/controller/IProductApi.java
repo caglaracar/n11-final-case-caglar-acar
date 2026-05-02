@@ -4,7 +4,6 @@ import com.caglar.common.dto.BaseResponse;
 import com.caglar.product.dto.request.CreateProductRequestDto;
 import com.caglar.product.dto.request.UpdateProductRequestDto;
 import com.caglar.product.dto.response.ProductResponseDto;
-import com.caglar.product.dto.response.TrendingTermResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -16,9 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-
-@Tag(name = "Product", description = "Ürün işlemleri")
+@Tag(name = "Product", description = "Ürün CRUD işlemleri")
 public interface IProductApi {
 
     @Operation(summary = "Ürün oluştur (SELLER)")
@@ -40,17 +37,4 @@ public interface IProductApi {
                                                                    @RequestParam(required = false) String categoryId,
                                                                    @RequestParam(required = false) String brandId,
                                                                    Pageable pageable);
-
-    @Operation(summary = "En çok görüntülenen ürünler (top N)")
-    ResponseEntity<BaseResponse<List<ProductResponseDto>>> getPopularList(@RequestParam(defaultValue = "5") int limit);
-
-    @Operation(summary = "Fiyatı düşen ürünler")
-    ResponseEntity<BaseResponse<List<ProductResponseDto>>> getPriceDropList(@RequestParam(defaultValue = "12") int limit);
-
-    @Operation(summary = "Aktif flash deal ürünleri")
-    ResponseEntity<BaseResponse<List<ProductResponseDto>>> getFlashDealList();
-
-    @Operation(summary = "En çok aranan terimler (Redis ZSET)")
-    ResponseEntity<BaseResponse<List<TrendingTermResponseDto>>> getTrendingTermList(
-            @RequestParam(defaultValue = "10") int limit);
 }
