@@ -7,9 +7,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import com.caglar.order.client.BasketClient;
+import com.caglar.order.client.NotificationClient;
 import com.caglar.order.client.PaymentClient;
 import com.caglar.order.client.ProductStockClient;
 import com.caglar.order.client.UserClient;
+import com.caglar.order.client.dto.OrderConfirmedNotificationRequest;
 import com.caglar.order.client.dto.AddressDto;
 import com.caglar.order.client.dto.BasketDto;
 import com.caglar.order.client.dto.InitCheckoutRequest;
@@ -47,6 +49,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductStockClient stockClient;
     private final PaymentClient paymentClient;
     private final OrderEventPublisher eventPublisher;
+    private final NotificationClient notificationClient;
 
     @Override
     @Transactional
@@ -176,6 +179,18 @@ public class OrderServiceImpl implements OrderService {
                 order.getCustomerName(), order.getTotalAmount(), order.getCurrency()));
         eventPublisher.publishConfirmationEmail(order.getCustomerEmail(),
                 order.getId(), order.getTotalAmount(), order.getCurrency());
+        safeNotifyOrderConfirmed(order);
+    }
+
+    private void safeNotifyOrderConfirmed(Order order) {
+        try {
+            notificationClient.sendOrderConfirmed(new OrderConfirmedNotificationRequest(
+                    order.getId(), order.getCustomerEmail(), order.getCustomerName(),
+                    order.getTotalAmount(), order.getCurrency()));
+            log.info("Direct notification sent orderId={}", order.getId());
+        } catch (Exception ex) {
+            log.warn("Direct notification failed orderId={}: {}", order.getId(), ex.getMessage());
+        }
     }
 
     @Override

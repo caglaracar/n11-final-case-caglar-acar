@@ -4,6 +4,7 @@ import com.caglar.common.dto.BaseResponse;
 import com.caglar.common.event.OrderPlacedEvent;
 import com.caglar.common.exception.BusinessException;
 import com.caglar.order.client.BasketClient;
+import com.caglar.order.client.NotificationClient;
 import com.caglar.order.client.PaymentClient;
 import com.caglar.order.client.ProductStockClient;
 import com.caglar.order.client.UserClient;
@@ -46,6 +47,7 @@ class OrderServiceImplTest {
     @Mock ProductStockClient stockClient;
     @Mock PaymentClient paymentClient;
     @Mock OrderEventPublisher eventPublisher;
+    @Mock NotificationClient notificationClient;
 
     @InjectMocks OrderServiceImpl service;
 
