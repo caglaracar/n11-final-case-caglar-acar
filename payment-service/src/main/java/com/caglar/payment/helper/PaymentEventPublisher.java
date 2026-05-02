@@ -32,8 +32,6 @@ public class PaymentEventPublisher {
             log.info("Kafka publish topic={} key={}", topic, key);
         } catch (JsonProcessingException e) {
             log.error("Kafka publish serialize failed topic={} key={}: {}", topic, key, e.getMessage());
-        } catch (Exception e) {
-            log.error("Kafka publish failed topic={} key={}: {}", topic, key, e.getMessage());
         }
     }
 }
