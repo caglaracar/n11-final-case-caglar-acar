@@ -55,4 +55,3 @@ Gateway: http://localhost:8080
 |----------|-----|
 | Shop | https://sepetify-shop.vercel.app |
 | Admin | https://sepetify-admin.vercel.app |
-| API Gateway | https://gateway-service-staging-693501117153.europe-west1.run.app |
