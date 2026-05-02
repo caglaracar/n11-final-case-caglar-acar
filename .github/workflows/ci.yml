@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  pull-requests: read
 
 env:
   PROJECT_ID: n11-patika-final
