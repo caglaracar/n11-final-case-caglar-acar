@@ -11,6 +11,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Card } from '@/shared/components/ui/card';
 import { cn } from '@/shared/lib/utils';
 
+
 export interface DataTableColumn<T> {
   key: string;
   header: ReactNode;

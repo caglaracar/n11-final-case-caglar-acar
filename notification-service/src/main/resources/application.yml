@@ -4,13 +4,6 @@ server:
 spring:
   application:
     name: notification-service
-  # ────────────────────────────────────────────────────────────────
-  # Mail backend (env ile override edilebilir):
-  #   • Default = Gmail SMTP (gerçek mail gider)
-  #   • Lokal MailHog için:
-  #       MAIL_HOST=localhost MAIL_PORT=1025 MAIL_USERNAME= MAIL_PASSWORD= \
-  #       MAIL_SMTP_AUTH=false MAIL_SMTP_STARTTLS=false mvn -pl notification-service spring-boot:run
-  # ────────────────────────────────────────────────────────────────
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
