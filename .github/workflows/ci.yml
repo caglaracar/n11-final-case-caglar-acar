@@ -138,7 +138,7 @@ jobs:
             EXTRA_SECRETS=",IYZICO_API_KEY=IYZICO_API_KEY:latest,IYZICO_SECRET_KEY=IYZICO_SECRET_KEY:latest"
           fi
           if [ "${{ matrix.service }}" = "notification-service" ]; then
-            EXTRA_SECRETS="${EXTRA_SECRETS},MAIL_USERNAME=MAIL_USERNAME:latest,MAIL_PASSWORD=MAIL_PASSWORD:latest"
+            EXTRA_SECRETS="${EXTRA_SECRETS},MAIL_USERNAME=MAIL_USERNAME:latest,MAIL_PASSWORD=MAIL_PASSWORD:latest,SLACK_WEBHOOK_URL=SLACK_WEBHOOK_URL:latest"
           fi
           gcloud run deploy ${{ matrix.service }}-staging \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
@@ -222,7 +222,7 @@ jobs:
             EXTRA_SECRETS=",IYZICO_API_KEY=IYZICO_API_KEY:latest,IYZICO_SECRET_KEY=IYZICO_SECRET_KEY:latest"
           fi
           if [ "${{ matrix.service }}" = "notification-service" ]; then
-            EXTRA_SECRETS="${EXTRA_SECRETS},MAIL_USERNAME=MAIL_USERNAME:latest,MAIL_PASSWORD=MAIL_PASSWORD:latest"
+            EXTRA_SECRETS="${EXTRA_SECRETS},MAIL_USERNAME=MAIL_USERNAME:latest,MAIL_PASSWORD=MAIL_PASSWORD:latest,SLACK_WEBHOOK_URL=SLACK_WEBHOOK_URL:latest"
           fi
           gcloud run deploy ${{ matrix.service }} \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
