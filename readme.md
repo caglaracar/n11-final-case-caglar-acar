@@ -49,6 +49,23 @@ Eureka: http://localhost:8761
 MailHog: http://localhost:8025  
 Gateway: http://localhost:8080
 
+## Testler
+
+Servis katmanında JUnit 5 + Mockito ile unit testler yazıldı. Spring context yüklenmeden çalışır.
+
+```bash
+# Tüm modülleri test et
+mvn test
+
+# Belirli bir servis
+mvn -pl order-service test
+
+# Tek test sınıfı
+mvn -pl auth-service test -Dtest=AuthServiceImplTest
+```
+
+Kapsanan servisler: `auth-service`, `basket-service`, `order-service`, `payment-service`
+
 ## Canlı Ortam
 
 | Uygulama | URL |

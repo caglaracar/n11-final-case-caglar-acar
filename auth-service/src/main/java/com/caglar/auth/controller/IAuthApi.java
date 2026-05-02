@@ -15,10 +15,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import static com.caglar.common.constant.RestApis.LOGIN;
-import static com.caglar.common.constant.RestApis.LOGOUT;
-import static com.caglar.common.constant.RestApis.REFRESH;
-import static com.caglar.common.constant.RestApis.REGISTER;
 
 @Tag(name = "Auth", description = "Kayıt, login, refresh, logout işlemleri")
 public interface IAuthApi {
