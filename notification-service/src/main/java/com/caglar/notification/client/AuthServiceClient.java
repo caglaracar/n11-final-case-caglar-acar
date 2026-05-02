@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import static com.caglar.common.constant.RestApis.AUTH;
 
-@FeignClient(name = "auth-service", contextId = "authServiceClient", path = AUTH)
+@FeignClient(name = "auth-service", url = "${feign.auth-service.url:}", contextId = "authServiceClient", path = AUTH)
 public interface AuthServiceClient {
 
     @GetMapping("/internal/{authId}")

@@ -40,3 +40,13 @@ eureka:
     enabled: false
     register-with-eureka: false
     fetch-registry: false
+
+feign:
+  payment-service:
+    url: https://payment-service-693501117153.europe-west1.run.app
+  basket-service:
+    url: https://basket-service-693501117153.europe-west1.run.app
+  product-service:
+    url: https://product-service-693501117153.europe-west1.run.app
+  user-service:
+    url: https://user-service-693501117153.europe-west1.run.app

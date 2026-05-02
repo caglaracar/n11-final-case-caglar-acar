@@ -29,3 +29,7 @@ eureka:
     enabled: false
     register-with-eureka: false
     fetch-registry: false
+
+feign:
+  auth-service:
+    url: https://auth-service-693501117153.europe-west1.run.app

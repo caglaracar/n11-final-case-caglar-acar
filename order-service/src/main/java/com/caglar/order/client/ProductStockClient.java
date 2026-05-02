@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "product-service", path = "/dev/v1/product/stock", contextId = "productStockClient")
+@FeignClient(name = "product-service", url = "${feign.product-service.url:}", path = "/dev/v1/product/stock", contextId = "productStockClient")
 public interface ProductStockClient {
 
     @PostMapping("/reserve")

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import static com.caglar.common.constant.RestApis.CREATE_USER;
 import static com.caglar.common.constant.RestApis.USER;
 
-@FeignClient(name = "user-service", contextId = "userServiceClient", path = USER)
+@FeignClient(name = "user-service", url = "${feign.user-service.url:}", contextId = "userServiceClient", path = USER)
 public interface UserServiceClient {
 
     @PostMapping(CREATE_USER)
