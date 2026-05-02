@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useAuthStore } from '@/features/auth/store';
+import { MAX_PAYMENT_AMOUNT } from '@/shared/lib/payment';
 
 export interface CartLine {
   productId: string;
@@ -14,6 +15,8 @@ export interface CartLine {
 
 interface CartState {
   items: CartLine[];
+  /** Bir sonraki siparişe ayrılan kalemler (yalnızca local'de tutulur). */
+  saved: CartLine[];
   /** Sunucudan gelen sepete state'i ezerek bağla. */
   setLines: (lines: CartLine[]) => void;
   add: (item: Omit<CartLine, 'quantity'>, qty?: number) => void;
@@ -21,6 +24,12 @@ interface CartState {
   remove: (productId: string) => void;
   clear: () => void;
   total: () => number;
+  /** Limiti aşan kalemleri otomatik olarak "sonraki sipariş"e ayırır. */
+  autoSplit: () => number;
+  /** Ayrılan kalemden 1 adet sepete geri alır. */
+  restoreSaved: (productId: string, qty?: number) => void;
+  /** Ayrılan kalemi tamamen siler. */
+  removeSaved: (productId: string) => void;
 }
 
 const isAuthenticated = () => !!useAuthStore.getState().tokens?.accessToken;
@@ -91,6 +100,55 @@ export const useCartStore = create<CartState>()(
         });
       },
       total: () => get().items.reduce((acc, i) => acc + i.price * i.quantity, 0),
+      saved: [],
+      autoSplit: () => {
+        const state = get();
+        const items = state.items.map((i) => ({ ...i }));
+        const saved = state.saved.map((i) => ({ ...i }));
+        let total = items.reduce((a, i) => a + i.price * i.quantity, 0);
+        let moved = 0;
+        while (total >= MAX_PAYMENT_AMOUNT && items.length > 0) {
+          const idx = items.reduce((m, it, i, arr) => (it.price > arr[m].price ? i : m), 0);
+          const line = items[idx];
+          line.quantity -= 1;
+          total -= line.price;
+          moved += 1;
+          const dest = saved.find((s) => s.productId === line.productId);
+          if (dest) dest.quantity += 1;
+          else saved.push({ ...line, quantity: 1 });
+          if (line.quantity <= 0) items.splice(idx, 1);
+        }
+        if (moved === 0) return 0;
+        set({ items, saved });
+        syncBackend(async () => {
+          const { basketApi } = await import('@/features/cart/api/basketApi');
+          return basketApi.syncFromLocal(items);
+        });
+        return moved;
+      },
+      restoreSaved: (productId, qty = 1) => {
+        const state = get();
+        const src = state.saved.find((s) => s.productId === productId);
+        if (!src) return;
+        const take = Math.min(qty, src.quantity);
+        const saved = state.saved
+          .map((s) => (s.productId === productId ? { ...s, quantity: s.quantity - take } : s))
+          .filter((s) => s.quantity > 0);
+        const existing = state.items.find((i) => i.productId === productId);
+        const items = existing
+          ? state.items.map((i) =>
+              i.productId === productId ? { ...i, quantity: i.quantity + take } : i,
+            )
+          : [...state.items, { ...src, quantity: take }];
+        set({ items, saved });
+        syncBackend(async () => {
+          const { basketApi } = await import('@/features/cart/api/basketApi');
+          return basketApi.syncFromLocal(items);
+        });
+      },
+      removeSaved: (productId) => {
+        set((s) => ({ saved: s.saved.filter((i) => i.productId !== productId) }));
+      },
     }),
     { name: 'sepetify-cart' },
   ),
