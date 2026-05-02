@@ -28,8 +28,6 @@ public enum ErrorType {
     PRODUCT_OUT_OF_STOCK(4002, "Ürün stokta yok", HttpStatus.CONFLICT),
     CATEGORY_NOT_FOUND(4003, "Kategori bulunamadı", HttpStatus.NOT_FOUND),
     BRAND_NOT_FOUND(4004, "Marka bulunamadı", HttpStatus.NOT_FOUND),
-    REVIEW_NOT_FOUND(4005, "Değerlendirme bulunamadı", HttpStatus.NOT_FOUND),
-    DUPLICATE_REVIEW(4006, "Bu ürün için zaten değerlendirme yapıldı", HttpStatus.CONFLICT),
 
     // 5xxx — basket
     BASKET_NOT_FOUND(5001, "Sepet bulunamadı", HttpStatus.NOT_FOUND),

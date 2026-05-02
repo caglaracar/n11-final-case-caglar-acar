@@ -13,11 +13,8 @@ public final class RestApis {
     // service base paths
     public static final String AUTH     = ROOT_DEV_V1 + "/auth";
     public static final String USER     = ROOT_DEV_V1 + "/user-profile";
-    public static final String WISHLIST = ROOT_DEV_V1 + "/wishlist";
     public static final String ADDRESS  = ROOT_DEV_V1 + "/address";
     public static final String PRODUCT  = ROOT_DEV_V1 + "/product";
-    public static final String REVIEW   = ROOT_DEV_V1 + "/review";
-    public static final String BLOG     = ROOT_DEV_V1 + "/blog";
     public static final String BANNER   = ROOT_DEV_V1 + "/banner";
     public static final String BASKET   = ROOT_DEV_V1 + "/basket";
     public static final String ORDER    = ROOT_DEV_V1 + "/order";
