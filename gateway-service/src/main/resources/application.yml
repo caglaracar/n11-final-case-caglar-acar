@@ -51,7 +51,7 @@ spring:
         - id: order-service
           uri: lb://order-service
           predicates:
-            - Path=/dev/v1/order/**
+            - Path=/dev/v1/order/**,/dev/v1/admin/**
         - id: payment-service
           uri: lb://payment-service
           predicates:
