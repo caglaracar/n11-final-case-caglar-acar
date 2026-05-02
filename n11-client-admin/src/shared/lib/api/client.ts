@@ -7,7 +7,10 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/features/auth/store';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
+const BASE_URL = import.meta.env.VITE_API_URL;
+if (!BASE_URL) {
+  throw new Error('VITE_API_URL is not set. Copy .env.example to .env.');
+}
 
 // ─── Types ─────────────────────────────────────────────────────────────
 

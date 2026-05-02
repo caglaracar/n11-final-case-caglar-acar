@@ -9,7 +9,10 @@ import { toast } from 'sonner';
 import { useAuthStore, getAccessToken, getRefreshToken } from '@/features/auth/store';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+if (!BASE_URL) {
+  throw new Error('NEXT_PUBLIC_API_BASE_URL is not set. Copy .env.example to .env.local.');
+}
 
 // ─── Types ────────────────────────────────────────────────────────────
 
