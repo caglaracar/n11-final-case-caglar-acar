@@ -15,10 +15,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-/**
- * Domain DTO → iyzipay-java SDK request dönüşümleri.
- * IyzicoServiceImpl iş mantığa odaklanabilsin diye tüm mapping burada.
- */
 public final class IyzicoRequestMapper {
 
     private static final String DEFAULT_IP = "127.0.0.1";

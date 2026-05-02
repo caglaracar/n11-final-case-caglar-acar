@@ -11,11 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/**
- * Doğrudan dispatch tüketicisi:
- * Diğer servislerin <i>"şu maili / şu slack mesajını gönder"</i> taleplerini alır
- * ve ilgili sender'a yönlendirir.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

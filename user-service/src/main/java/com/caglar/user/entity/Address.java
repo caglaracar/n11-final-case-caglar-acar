@@ -13,10 +13,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Address {
 
-    /** Adres satırı içinde unique. uuid string. */
     private String id;
 
-    private String title;       // "Ev", "İş"
+    private String title;
     private String fullName;
     private String phone;
     private String line1;
@@ -28,7 +27,6 @@ public class Address {
     @Builder.Default
     private Boolean isDefault = false;
 
-    /** DTO'dan partial merge — sadece null olmayan alanlar geçilir. */
     public void mergeFrom(Address src) {
         if (src.title    != null) {
             this.title    = src.title;

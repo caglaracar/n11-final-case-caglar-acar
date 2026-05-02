@@ -4,10 +4,6 @@ import com.caglar.common.dto.BaseResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-/**
- * Controller'ların extend edebileceği ortak helper.
- * Hedef: ResponseEntity<BaseResponse<T>> kalıbını tek noktada üretmek.
- */
 public abstract class BaseController {
 
     protected <T> ResponseEntity<BaseResponse<T>> ok(T data) {

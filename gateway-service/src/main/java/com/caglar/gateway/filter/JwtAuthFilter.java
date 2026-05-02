@@ -20,12 +20,6 @@ import reactor.core.publisher.Mono;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Tüm istekleri inceler:
- * - Whitelist path'lerine (login/register/refresh, swagger, actuator) dokunmaz.
- * - Authorization: Bearer <token> bekler, JWT'yi doğrular.
- * - sub -> X-User-Id, role -> X-User-Role olarak downstream'e enjekte eder.
- */
 @Slf4j
 @Component
 public class JwtAuthFilter implements GlobalFilter, Ordered {
@@ -64,11 +58,6 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         }
     }
 
-    /**
-     * Client'tan gelen X-User-Id / X-User-Role header'larını silmek kritik:
-     * whitelist endpoint'lerde (login/register) JWT filter atlanır, bu durumda
-     * client'ın koyduğu header downstream'e sızabilir → spoofing.
-     */
     private ServerHttpRequest stripUserHeaders(ServerHttpRequest request) {
         return request.mutate().headers(h -> {
             h.remove("X-User-Id");

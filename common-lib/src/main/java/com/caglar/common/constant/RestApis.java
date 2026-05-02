@@ -10,7 +10,6 @@ public final class RestApis {
 
     public static final String ROOT_DEV_V1 = DEVELOPER + VERSION_V1;
 
-    // service base paths
     public static final String AUTH     = ROOT_DEV_V1 + "/auth";
     public static final String USER     = ROOT_DEV_V1 + "/user-profile";
     public static final String ADDRESS  = ROOT_DEV_V1 + "/address";
@@ -22,7 +21,6 @@ public final class RestApis {
     public static final String CONTACT  = ROOT_DEV_V1 + "/contact";
     public static final String ADMIN    = ROOT_DEV_V1 + "/admin";
 
-    // shared sub-paths
     public static final String REGISTER     = "/register";
     public static final String LOGIN        = "/login";
     public static final String REFRESH      = "/refresh";

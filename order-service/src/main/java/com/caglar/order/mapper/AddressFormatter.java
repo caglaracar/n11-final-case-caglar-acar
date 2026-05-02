@@ -2,10 +2,6 @@ package com.caglar.order.mapper;
 
 import com.caglar.order.client.dto.AddressDto;
 
-/**
- * AddressDto için tek satırlık okunaklı string üretir.
- * Örnek: "Atatürk Cad. No:1, Kadıköy, İstanbul/Marmara"
- */
 public final class AddressFormatter {
 
     private AddressFormatter() {}

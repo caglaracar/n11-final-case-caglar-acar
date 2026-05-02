@@ -11,12 +11,6 @@ import com.caglar.order.enums.OrderStatus;
 
 import java.util.List;
 
-/**
- * Checkout akışı boyunca yapılan dönüşümleri tek yerde toplar:
- *  - Sepet + profil + adres → PENDING Order
- *  - Order → product-service stock isteği
- *  - Order → payment-service iyzico init isteği
- */
 public final class CheckoutMapper {
 
     private static final String SANDBOX_IDENTITY_NUMBER = "11111111111";
@@ -74,8 +68,6 @@ public final class CheckoutMapper {
                 items
         );
     }
-
-    // ---- private helpers ----
 
     private static OrderItem toOrderItem(BasketDto.Item item) {
         return OrderItem.builder()

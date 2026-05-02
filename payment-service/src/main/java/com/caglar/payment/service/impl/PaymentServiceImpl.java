@@ -24,12 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 
-/**
- * Payment yaşam döngüsü:
- *  1. {@link #initiate} — iyzico checkout form başlatır, INITIATED Payment yaratır.
- *  2. {@link #handleCallback} — iyzico callback'inde retrieve eder, SUCCESS/FAILED işler ve
- *     ilgili Kafka event'ini yayınlar; tarayıcıyı frontend redirect URL'ine yönlendirir.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -93,10 +87,6 @@ public class PaymentServiceImpl implements PaymentService {
                 payment.getCreatedAt()
         );
     }
-
-    // -------------------------------------------------------------------------
-    // helpers
-    // -------------------------------------------------------------------------
 
     private static Payment buildInitiated(InitCheckoutRequestDto request, String token) {
         return Payment.builder()

@@ -15,10 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Stok rezerve/release servisi.
- * Atomik {@code findAndModify(stock >= qty, $inc stock=-qty)} kullanılarak yarış koşulları engellenir.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor

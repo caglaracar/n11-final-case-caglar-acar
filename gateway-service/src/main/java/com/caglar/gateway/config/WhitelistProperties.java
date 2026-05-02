@@ -7,11 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * JWT doğrulamasından muaf tutulan path'ler.
- * `paths` tam eşleşme, `prefixes` ise startsWith eşleşmesi yapar.
- * application.yml içinde gateway.security.whitelist altında tanımlanır.
- */
 @Configuration
 @ConfigurationProperties(prefix = "gateway.security.whitelist")
 @Data

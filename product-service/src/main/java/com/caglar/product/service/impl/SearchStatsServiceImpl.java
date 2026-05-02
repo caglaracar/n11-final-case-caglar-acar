@@ -21,11 +21,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Redis ZSET'ler:
- *  - "search:terms"        → arama metni → kez sayısı (trending search)
- *  - "search:product:hits" → productId → bu ürünün arama sonucunda göründüğü kez
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,7 +28,7 @@ public class SearchStatsServiceImpl implements SearchStatsService {
 
     private static final String KEY_TERMS        = "search:terms";
     private static final String KEY_PRODUCT_HITS = "search:product:hits";
-    private static final String KEY_POPULAR_PFX  = "popular:views:"; // popular:views:yyyy-MM-dd
+    private static final String KEY_POPULAR_PFX  = "popular:views:";
     private static final long   POPULAR_TTL_DAYS = 3L;
     private static final int    MAX_TOP_TERMS    = 50;
 
@@ -114,8 +109,6 @@ public class SearchStatsServiceImpl implements SearchStatsService {
         return KEY_POPULAR_PFX + LocalDate.now(ZoneOffset.UTC).format(DateTimeFormatter.ISO_LOCAL_DATE);
     }
 
-    // ---------- private helpers ----------
-
     private Map<String, Long> readHits(Collection<String> productIds) {
         ZSetOperations<String, String> z = redis.opsForZSet();
         Map<String, Long> out = new HashMap<>();
@@ -166,7 +159,6 @@ public class SearchStatsServiceImpl implements SearchStatsService {
         return t.replaceAll("\\s+", " ");
     }
 
-    /** Tüm Redis çağrıları için ortak hata yutucu. */
     private <T> T safe(String op, java.util.concurrent.Callable<T> action) {
         try {
             return action.call();

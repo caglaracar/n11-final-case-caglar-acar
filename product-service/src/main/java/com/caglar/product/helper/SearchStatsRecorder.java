@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
-/** Arama metriklerini Redis'e yazan side-effect; sadece sorgu varsa ve ilk sayfada çalışır. */
 @Component
 @RequiredArgsConstructor
 public class SearchStatsRecorder {

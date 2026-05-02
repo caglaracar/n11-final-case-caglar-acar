@@ -73,7 +73,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponseDto> getList(String q, String categoryId, String brandId, Pageable pageable) {
-        // Product.brand alanı isim tutuyor (örn. "Apple"). Filtrede brandId geldiyse → ismi resolve et.
+
         String brandFilter = brandId;
         if (brandId != null && !brandId.isBlank()) {
             brandFilter = brandRepository.findById(brandId)

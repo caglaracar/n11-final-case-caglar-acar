@@ -23,10 +23,8 @@ public class Brand extends BaseDocument {
 
     private String description;
 
-    /** URL-friendly slug. */
     private String slug;
 
-    /** Logo URL. */
     private String logoUrl;
 
     @Builder.Default
@@ -35,7 +33,6 @@ public class Brand extends BaseDocument {
     @Builder.Default
     private int sortOrder = 0;
 
-    /** PATCH semantiği — sadece null/blank olmayan alanlar güncellenir. */
     public void merge(String name, String description, String slug, String logoUrl,
                       Boolean active, Integer sortOrder) {
         if (StringUtils.hasText(name)) {

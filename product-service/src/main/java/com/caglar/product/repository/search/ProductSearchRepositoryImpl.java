@@ -14,10 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * MongoTemplate + Criteria ile dinamik arama. Yeni filtre eklemek için sadece
- * {@link #buildCriteria(ProductSearchFilter)} içine yeni bir satır eklenir.
- */
 @RequiredArgsConstructor
 public class ProductSearchRepositoryImpl implements ProductSearchRepository {
 

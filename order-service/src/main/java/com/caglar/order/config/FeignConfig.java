@@ -8,11 +8,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-/**
- * Order-service downstream servislere (user, basket, product) Feign çağrısı yaparken
- * gateway'den gelen kullanıcı header'larını ({@code X-User-Id}, {@code X-User-Role})
- * iletir; aksi takdirde aşağıdaki servislerin {@code @PreAuthorize} guard'ları reddeder.
- */
 @Configuration
 public class FeignConfig {
 

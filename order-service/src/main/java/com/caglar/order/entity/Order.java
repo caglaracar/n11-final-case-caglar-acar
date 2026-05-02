@@ -51,7 +51,6 @@ public class Order extends BaseEntity {
     @Column(name = "status", nullable = false, length = 16)
     private OrderStatus status;
 
-    /** Kargo adresi snapshot'ı (adres user-service'te değişebilir). */
     @Column(name = "shipping_address", length = 512)
     private String shippingAddress;
 

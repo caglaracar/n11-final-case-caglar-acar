@@ -8,10 +8,8 @@ import java.util.List;
 
 public interface BannerService {
 
-    /** Sadece aktif banner'lar — public ana sayfa için. */
     List<BannerResponseDto> getActiveList();
 
-    /** Tümü — admin paneli için. */
     List<BannerResponseDto> getList();
 
     BannerResponseDto getById(String id);

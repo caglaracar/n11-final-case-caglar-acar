@@ -35,7 +35,6 @@ public class Payment extends BaseEntity {
     @Column(name = "iyzico_token", nullable = false, length = 128)
     private String iyzicoToken;
 
-    /** İyzico tarafındaki nihai paymentId — sadece success'te dolu. */
     @Column(name = "iyzico_payment_id", length = 64)
     private String iyzicoPaymentId;
 

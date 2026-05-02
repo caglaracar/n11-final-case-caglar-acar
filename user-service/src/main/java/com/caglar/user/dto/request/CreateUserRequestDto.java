@@ -18,6 +18,5 @@ public record CreateUserRequestDto(
         @NotBlank
         String email,
 
-        /** Auth-service rol adı (USER, SELLER, ADMIN). Eski çağrılar için opsiyonel. */
         String role
 ) {}

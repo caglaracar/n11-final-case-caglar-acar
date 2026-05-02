@@ -3,10 +3,6 @@ package com.caglar.product.dto.request;
 import lombok.Builder;
 import org.springframework.util.StringUtils;
 
-/**
- * Ürün listeleme/arama için filtre. Yeni alan eklendiğinde sadece bu record + criteria builder güncellenir;
- * service tarafında if-else patlaması olmaz.
- */
 @Builder
 public record ProductSearchFilter(
         String q,

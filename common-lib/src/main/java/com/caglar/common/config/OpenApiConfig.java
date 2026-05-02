@@ -9,10 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Ortak OpenAPI yapılandırması — her servis kendi spring.application.name'i +
- * application.yml'deki "openapi.title" / "openapi.version" ile override eder.
- */
 @Configuration
 public class OpenApiConfig {
 

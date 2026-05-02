@@ -63,7 +63,6 @@ public class UserProfileServiceImpl implements UserProfileService {
         return userProfileRepository.findByRoleAndQuery(role, q, pageable);
     }
 
-    /** Profil yoksa auth-service'ten bilgi çekip oluşturur (idempotent backfill). */
     private UserProfile findOrBackfill(Long authId) {
         return userProfileRepository.findByAuthId(authId).orElseGet(() -> backfillFromAuth(authId));
     }

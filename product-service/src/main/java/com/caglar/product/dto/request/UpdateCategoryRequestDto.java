@@ -2,7 +2,6 @@ package com.caglar.product.dto.request;
 
 import lombok.Builder;
 
-/** Tüm alanlar opsiyonel — sadece gönderilenler güncellenir (PATCH semantiği). */
 @Builder
 public record UpdateCategoryRequestDto(
         String name,

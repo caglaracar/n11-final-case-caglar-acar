@@ -11,10 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-/**
- * iyzipay-java SDK üzerine ince bir sarmalayıcı.
- * Tüm DTO → SDK dönüşümleri {@link IyzicoRequestMapper}'da; burada sadece çağrı + sonuç değerlendirme.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor

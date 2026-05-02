@@ -8,17 +8,13 @@ import java.util.List;
 
 public interface OrderService {
 
-    /** Sepetten sipariş oluştur, stok rezerve et, iyzico checkout başlat. */
     CheckoutResponseDto checkout(Long authId, CheckoutRequestDto dto);
 
     OrderResponseDto getById(Long authId, Long orderId);
 
     List<OrderResponseDto> getMyOrders(Long authId);
 
-    /** Kullanıcı iptali — sadece PENDING durumdaki siparişler için. */
     OrderResponseDto cancel(Long authId, Long orderId);
-
-    // --- internal saga callbacks (kafka consumer'dan) ---
 
     void onPaymentCompleted(Long orderId);
 

@@ -14,15 +14,6 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Access + Refresh JWT üretici/doğrulayıcı.
- *
- * Claim'ler:
- *   - sub : authId (Long)
- *   - role: USER | SELLER | ADMIN
- *   - jti : refresh token rotation için unique id
- *   - typ : "access" | "refresh"
- */
 @Slf4j
 @Component
 public class JwtTokenManager {
@@ -56,9 +47,6 @@ public class JwtTokenManager {
                 .compact();
     }
 
-    /**
-     * @return [token, jti]
-     */
     public RefreshToken createRefreshToken(Long authId, String role) {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(refreshTtlSeconds);

@@ -16,8 +16,6 @@ public final class ProductMapper {
 
     private ProductMapper() {}
 
-    // ---------- Product ----------
-
     public static ProductResponseDto toResponse(Product p) {
         return toResponse(p, null);
     }
@@ -67,8 +65,6 @@ public final class ProductMapper {
                 .build();
     }
 
-    // ---------- Category ----------
-
     public static CategoryResponseDto toResponse(Category c) {
         return CategoryResponseDto.builder()
                 .id(c.getId())
@@ -93,8 +89,6 @@ public final class ProductMapper {
                 .sortOrder(dto.sortOrder() == null ? 0 : dto.sortOrder())
                 .build();
     }
-
-    // ---------- Brand ----------
 
     public static BrandResponseDto toResponse(Brand b) {
         return BrandResponseDto.builder()

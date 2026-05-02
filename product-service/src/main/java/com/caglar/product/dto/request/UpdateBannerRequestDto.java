@@ -2,7 +2,6 @@ package com.caglar.product.dto.request;
 
 import lombok.Builder;
 
-/** Tüm alanlar opsiyonel — gönderilmeyenler değiştirilmez. */
 @Builder
 public record UpdateBannerRequestDto(
         String eyebrow,

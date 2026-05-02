@@ -1,8 +1,5 @@
 package com.caglar.common.dto;
 
-/**
- * Tüm REST endpoint'lerinin döndüğü ortak zarf.
- */
 public record BaseResponse<T>(
         boolean result,
         String errorMessage,

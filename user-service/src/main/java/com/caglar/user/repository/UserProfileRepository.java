@@ -19,7 +19,6 @@ public interface UserProfileRepository extends MongoRepository<UserProfile, Stri
     Page<UserProfile> findByUserNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
             String userName, String email, Pageable pageable);
 
-    /** Belirli bir role + serbest metin filtresi (admin paneli için). */
     @Query("{ 'role': ?0, '$or': [ "
             + "{ 'userName': { '$regex': ?1, '$options': 'i' } }, "
             + "{ 'email':    { '$regex': ?1, '$options': 'i' } } ] }")

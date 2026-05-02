@@ -8,10 +8,6 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-/**
- * order-service → product-service:
- * Sipariş oluşturulurken / iptal edilirken stoktan düşme/iade için.
- */
 public record StockOpRequestDto(
         @NotNull Long orderId,
         @NotEmpty @Valid List<Item> items

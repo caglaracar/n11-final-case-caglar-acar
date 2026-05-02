@@ -33,7 +33,6 @@ public class ProductCatalogServiceImpl implements ProductCatalogService {
     public List<ProductResponseDto> getPopularList(int limit) {
         int n = LimitUtil.clamp(limit, limits.popular().defaultValue(), limits.popular().max());
 
-        // 1) Bugünün Redis ZSET'inden en çok görüntülenen ürün id'leri
         List<String> redisIds = searchStatsService.topPopularProductIds(n);
         LinkedHashMap<String, ProductResponseDto> ordered = new LinkedHashMap<>();
 
@@ -49,7 +48,6 @@ public class ProductCatalogServiceImpl implements ProductCatalogService {
             }
         }
 
-        // 2) Yetmezse fallback: Mongo'daki global viewCount
         if (ordered.size() < n) {
             int missing = n - ordered.size();
             List<Product> fallback = productRepository.findTopByOrderByViewCountDesc(PageRequest.of(0, n + missing));

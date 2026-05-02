@@ -10,11 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
-/**
- * auth-service Feign çağrısını sarar; servis katmanı sadece bu helper'a {@code authId}
- * verir, ResponseEntity / BaseResponse açma derdi yaşamaz. Ağ hataları
- * {@link ErrorType#USER_NOT_FOUND} olarak yüzdürülür.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor

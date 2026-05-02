@@ -13,11 +13,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * Gateway, JWT'yi doğrular ve sub -> X-User-Id, role -> X-User-Role header'larını ekler.
- * Bu filtre o header'lardan SecurityContext'e Authentication yerleştirir, böylece
- * downstream servislerde @PreAuthorize("hasRole('ADMIN')") kullanılabilir.
- */
 @Component
 public class HeaderAuthFilter extends OncePerRequestFilter {
 

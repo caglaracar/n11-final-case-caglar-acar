@@ -2,7 +2,6 @@ package com.caglar.order.client.dto;
 
 import java.util.List;
 
-/** order-service → payment-service POST /dev/v1/payment/init. */
 public record InitCheckoutRequest(
         Long orderId,
         Long authId,

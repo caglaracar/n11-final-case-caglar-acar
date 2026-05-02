@@ -8,12 +8,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 
-/**
- * MongoDB doküman'ları için ortak base. Auditing (@EnableMongoAuditing)
- * her servisin kendi config'inde aktive edilir.
- *
- * createdAt/updatedAt epoch-millis olarak depolanır; dış dünyaya Instant (ISO-8601 / UTC) olarak çıkar.
- */
 @Getter
 @Setter
 public abstract class BaseDocument {

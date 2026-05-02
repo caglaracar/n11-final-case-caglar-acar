@@ -29,20 +29,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/**
- * Sipariş yaşam döngüsünü yönetir:
- *  1. {@link #checkout} — sepet + profil + adres alır, PENDING order yaratır,
- *     stok rezerve eder, payment-service'i tetikler.
- *  2. {@link #onPaymentCompleted} / {@link #onPaymentFailed} — Kafka saga callback'leri.
- *  3. {@link #cancel} — yalnızca PENDING order için stok release + status güncelleme.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
     private static final String CURRENCY = "TRY";
-    /** iyzico tek seferde 100.000 TRY ve üzeri tutarı kabul etmiyor. */
+
     private static final double MAX_CHECKOUT_AMOUNT = 99_999.99;
 
     private final OrderRepository orderRepository;
@@ -116,10 +109,6 @@ public class OrderServiceImpl implements OrderService {
         log.info("Order FAILED orderId={} reason={}", orderId, reason);
     }
 
-    // -------------------------------------------------------------------------
-    // checkout pipeline
-    // -------------------------------------------------------------------------
-
     private BasketDto fetchBasket() {
         BasketDto basket = unwrap(basketClient.getMyBasket().data(), "Sepet alınamadı");
         if (basket.items() == null || basket.items().isEmpty()) {
@@ -177,10 +166,6 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // saga callbacks
-    // -------------------------------------------------------------------------
-
     private void publishPaidEvents(Order order) {
         eventPublisher.publishOrderPlaced(new OrderPlacedEvent(
                 order.getId(), order.getAuthId(), order.getCustomerEmail(),
@@ -196,10 +181,6 @@ public class OrderServiceImpl implements OrderService {
             log.error("Stock release failed orderId={}: {}", order.getId(), ex.getMessage());
         }
     }
-
-    // -------------------------------------------------------------------------
-    // common helpers
-    // -------------------------------------------------------------------------
 
     private Order findOrderOrThrow(Long orderId) {
         return orderRepository.findById(orderId)

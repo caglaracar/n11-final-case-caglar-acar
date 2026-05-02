@@ -1,6 +1,5 @@
 package com.caglar.order.client.dto;
 
-/** user-service GET /dev/v1/address. */
 public record AddressDto(
         String id,
         String title,

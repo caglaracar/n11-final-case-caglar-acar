@@ -9,10 +9,6 @@ import jakarta.validation.constraints.Positive;
 
 import java.util.List;
 
-/**
- * order-service → payment-service (Feign).
- * İyzico Checkout Form Initialize için gerekli alanlar.
- */
 public record InitCheckoutRequestDto(
         @NotNull Long orderId,
         @NotNull Long authId,

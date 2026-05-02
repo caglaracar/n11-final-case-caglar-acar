@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-/** product-service POST /dev/v1/product/stock/{reserve|release}. */
 public record StockOpRequest(
         @NotNull Long orderId,
         @NotEmpty List<Item> items

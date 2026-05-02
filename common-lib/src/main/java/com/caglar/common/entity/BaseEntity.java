@@ -12,10 +12,6 @@ import lombok.Setter;
 
 import java.time.Instant;
 
-/**
- * Tüm JPA entity'leri için ortak base.
- * - createdAt / updatedAt epoch-millis (long); dış dünyaya Instant (ISO-8601 / UTC) olarak çıkar.
- */
 @Getter
 @Setter
 @MappedSuperclass

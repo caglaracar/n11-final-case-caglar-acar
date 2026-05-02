@@ -33,17 +33,12 @@ public class UserProfile extends BaseDocument {
     private String phone;
     private String avatar;
 
-    /** Auth-service tarafındaki rol — admin paneli müşteri/yöneticiyi ayırmak için kullanır. */
     @Indexed
     private String role;
 
-    /** Kayıtlı adresler. Checkout default seçer. */
     @Builder.Default
     private List<Address> addresses = new ArrayList<>();
 
-    // -------------------- profile --------------------
-
-    /** Sadece null olmayan alanları kopyalar (partial update). */
     public void applyProfilePatch(String name, String surName, String phone, String avatar) {
         if (name    != null) {
             this.name    = name;
@@ -58,8 +53,6 @@ public class UserProfile extends BaseDocument {
             this.avatar  = avatar;
         }
     }
-
-    // -------------------- addresses --------------------
 
     public void addAddress(Address addr, boolean wantDefault) {
         if (addresses == null) {
