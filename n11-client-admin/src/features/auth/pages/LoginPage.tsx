@@ -122,13 +122,34 @@ function RegisterForm() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: { userName: '', email: '', password: '', repassword: '', inviteCode: '' },
   });
+  const DEMO_INVITE = 'n11-bootcamp-admin-2026';
+  const useDemoInvite = () => {
+    setValue('inviteCode', DEMO_INVITE, { shouldValidate: true });
+    void navigator.clipboard?.writeText(DEMO_INVITE).catch(() => undefined);
+  };
   return (
     <form className="space-y-4" onSubmit={handleSubmit((v) => mutate(v))}>
+      <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-200">
+        <p className="font-semibold">Bootcamp değerlendirme · Demo davet kodu</p>
+        <div className="mt-1.5 flex items-center justify-between gap-2">
+          <code className="rounded bg-amber-100 px-2 py-1 font-mono text-[11px] dark:bg-amber-900/40">
+            {DEMO_INVITE}
+          </code>
+          <button
+            type="button"
+            onClick={useDemoInvite}
+            className="rounded border border-amber-300 bg-white px-2 py-1 text-[11px] font-medium hover:bg-amber-100 dark:border-amber-700 dark:bg-transparent dark:hover:bg-amber-900/30"
+          >
+            Otomatik doldur
+          </button>
+        </div>
+      </div>
       <Field id="r-userName" label="Kullanıcı adı" error={errors.userName?.message}>
         <Input id="r-userName" autoComplete="username" {...register('userName')} />
       </Field>
@@ -144,7 +165,7 @@ function RegisterForm() {
         </Field>
       </div>
       <Field id="r-invite" label="Davet kodu" error={errors.inviteCode?.message}>
-        <Input id="r-invite" {...register('inviteCode')} />
+        <Input id="r-invite" placeholder={DEMO_INVITE} {...register('inviteCode')} />
       </Field>
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? 'Oluşturuluyor…' : 'Hesap oluştur'}
