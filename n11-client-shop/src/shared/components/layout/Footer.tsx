@@ -48,7 +48,7 @@ function FooterCol({ title, children }: { title: string; children: React.ReactNo
 function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <li>
-      <Link className="transition-colors hover:text-foreground" href={href}>{children}</Link>
+      <Link className="transition-colors hover:text-foreground" href={href} prefetch={false}>{children}</Link>
     </li>
   );
 }
