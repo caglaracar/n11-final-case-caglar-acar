@@ -140,6 +140,10 @@ jobs:
           if [ "${{ matrix.service }}" = "notification-service" ]; then
             EXTRA_SECRETS="${EXTRA_SECRETS},MAIL_USERNAME=MAIL_USERNAME:latest,MAIL_PASSWORD=MAIL_PASSWORD:latest,SLACK_WEBHOOK_URL=SLACK_WEBHOOK_URL:latest"
           fi
+          MIN_INSTANCES=0
+          if [ "${{ matrix.service }}" = "notification-service" ] || [ "${{ matrix.service }}" = "order-service" ]; then
+            MIN_INSTANCES=1
+          fi
           gcloud run deploy ${{ matrix.service }}-staging \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
             --region=${{ env.REGION }} \
@@ -149,6 +153,7 @@ jobs:
             --set-env-vars="SPRING_PROFILES_ACTIVE=staging,SERVER_PORT=8080${EXTRA_ENV_VARS}" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest,KAFKA_BOOTSTRAP_SERVERS=KAFKA_BOOTSTRAP_SERVERS:latest,KAFKA_API_KEY=KAFKA_API_KEY:latest,KAFKA_API_SECRET=KAFKA_API_SECRET:latest${EXTRA_SECRETS}" \
             --vpc-egress=private-ranges-only \
+            --min-instances=${MIN_INSTANCES} \
             --memory=1Gi \
             --cpu=1 \
             --timeout=300 \
@@ -224,6 +229,10 @@ jobs:
           if [ "${{ matrix.service }}" = "notification-service" ]; then
             EXTRA_SECRETS="${EXTRA_SECRETS},MAIL_USERNAME=MAIL_USERNAME:latest,MAIL_PASSWORD=MAIL_PASSWORD:latest,SLACK_WEBHOOK_URL=SLACK_WEBHOOK_URL:latest"
           fi
+          MIN_INSTANCES=0
+          if [ "${{ matrix.service }}" = "notification-service" ] || [ "${{ matrix.service }}" = "order-service" ]; then
+            MIN_INSTANCES=1
+          fi
           gcloud run deploy ${{ matrix.service }} \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
             --region=${{ env.REGION }} \
@@ -233,6 +242,7 @@ jobs:
             --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SERVER_PORT=8080${EXTRA_ENV_VARS}" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest,KAFKA_BOOTSTRAP_SERVERS=KAFKA_BOOTSTRAP_SERVERS:latest,KAFKA_API_KEY=KAFKA_API_KEY:latest,KAFKA_API_SECRET=KAFKA_API_SECRET:latest${EXTRA_SECRETS}" \
             --vpc-egress=private-ranges-only \
+            --min-instances=${MIN_INSTANCES} \
             --memory=1Gi \
             --cpu=1 \
             --timeout=300 \
