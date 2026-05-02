@@ -40,6 +40,10 @@ eureka:
     register-with-eureka: false
     fetch-registry: false
 
+notification:
+  slack:
+    webhook-url: ${SLACK_WEBHOOK_URL:}
+
 feign:
   auth-service:
     url: https://auth-service-staging-693501117153.europe-west1.run.app
