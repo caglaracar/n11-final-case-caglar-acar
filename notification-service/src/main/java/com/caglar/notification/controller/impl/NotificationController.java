@@ -4,6 +4,7 @@ import com.caglar.common.controller.BaseController;
 import com.caglar.common.dto.BaseResponse;
 import com.caglar.notification.dto.request.OrderConfirmedRequestDto;
 import com.caglar.notification.sender.EmailSender;
+import com.caglar.notification.sender.SlackSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ import static com.caglar.common.constant.RestApis.NOTIFICATION;
 public class NotificationController extends BaseController {
 
     private final EmailSender emailSender;
+    private final SlackSender slackSender;
 
     @PostMapping("/order-confirmed")
     public ResponseEntity<BaseResponse<Boolean>> orderConfirmed(@RequestBody OrderConfirmedRequestDto dto) {
@@ -37,6 +39,13 @@ public class NotificationController extends BaseController {
                 dto.currency()
         );
         emailSender.send(dto.customerEmail(), subject, body);
+        slackSender.send("#all-n11-patika-case", String.format(
+                ":package: *Yeni Sipariş #%d*\nMüşteri: %s\nTutar: %.2f %s",
+                dto.orderId(),
+                dto.customerEmail(),
+                dto.totalAmount(),
+                dto.currency()
+        ));
         return ok(true);
     }
 }
