@@ -37,10 +37,6 @@ public class UserProfile extends BaseDocument {
     @Indexed
     private String role;
 
-    /** Wishlist — ürün id'leri tutulur, frontend ürünü ayrıca product API'den çeker. */
-    @Builder.Default
-    private List<String> wishlistProductIds = new ArrayList<>();
-
     /** Kayıtlı adresler. Checkout default seçer. */
     @Builder.Default
     private List<Address> addresses = new ArrayList<>();
@@ -109,30 +105,5 @@ public class UserProfile extends BaseDocument {
 
     private void clearDefaultFlags() {
         Optional.ofNullable(addresses).ifPresent(list -> list.forEach(a -> a.setIsDefault(false)));
-    }
-
-    // -------------------- wishlist --------------------
-
-    public boolean addToWishlist(String productId) {
-        if (wishlistProductIds == null) {
-            wishlistProductIds = new ArrayList<>();
-        }
-        if (wishlistProductIds.contains(productId)) {
-            return false;
-        }
-        wishlistProductIds.add(productId);
-        return true;
-    }
-
-    public boolean removeFromWishlist(String productId) {
-        return wishlistProductIds != null && wishlistProductIds.remove(productId);
-    }
-
-    public void clearWishlist() {
-        wishlistProductIds = new ArrayList<>();
-    }
-
-    public List<String> wishlistOrEmpty() {
-        return wishlistProductIds == null ? List.of() : wishlistProductIds;
     }
 }
