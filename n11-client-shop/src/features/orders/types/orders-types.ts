@@ -1,4 +1,10 @@
-export type OrderStatus = 'PENDING' | 'PAID' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'FAILED';
+export type OrderStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED'
+  | 'FAILED';
 
 export interface OrderItem {
   productId: string;
@@ -21,6 +27,11 @@ export interface Order {
   items: OrderItem[];
   createdAt: number;
   updatedAt: number;
+}
+
+export interface CheckoutPayload {
+  addressId: string;
+  clientIp?: string;
 }
 
 export interface CheckoutResponse {

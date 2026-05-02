@@ -86,7 +86,7 @@ export function AuthClient({ initial = 'login' }: { initial?: Tab }) {
           <Link href="/legal/privacy" className="underline hover:text-foreground">
             Gizlilik Politikası
           </Link>
-          'nı kabul etmiş olursun.
+          &apos;nı kabul etmiş olursun.
         </p>
       </div>
     </div>

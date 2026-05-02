@@ -5,11 +5,11 @@ import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
 
-import { orderApi, paymentApi } from '@/features/orders/api/orderApi';
+import { getOrderById, getPaymentByOrderId } from '@/features/orders/api/orderApi';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { formatCurrency } from '@/shared/lib/utils';
-import type { Order, PaymentStatus } from '@/features/orders/types';
+import type { Order, PaymentStatus } from '@/features/orders/types/orders-types';
 
 export default function OrderResultPage() {
   const params = useParams<{ id: string }>();
@@ -17,7 +17,7 @@ export default function OrderResultPage() {
 
   const orderQuery = useQuery<Order>({
     queryKey: ['order', orderId],
-    queryFn: () => orderApi.byId(orderId!),
+    queryFn: () => getOrderById(orderId!),
     enabled: !!orderId,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
@@ -27,7 +27,7 @@ export default function OrderResultPage() {
 
   const paymentQuery = useQuery({
     queryKey: ['payment', orderId],
-    queryFn: () => paymentApi.byOrderId(orderId!),
+    queryFn: () => getPaymentByOrderId(orderId!),
     enabled: !!orderId,
     retry: false,
   });

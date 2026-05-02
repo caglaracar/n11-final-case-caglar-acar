@@ -8,7 +8,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
-            Sepetify, premium ürünleri uygun fiyatlarla bir araya getiren Türkiye'nin yeni nesil alışveriş platformu.
+            Sepetify, premium ürünleri uygun fiyatlarla bir araya getiren Türkiye&apos;nin yeni nesil alışveriş platformu.
           </p>
         </div>
         <FooterCol title="Sepetify">

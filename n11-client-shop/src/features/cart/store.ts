@@ -1,8 +1,18 @@
 'use client';
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { toast } from 'sonner';
+
 import { useAuthStore } from '@/features/auth/store';
+import {
+  addBasketItem,
+  clearBasket,
+  getMyBasket,
+  removeBasketItem,
+  updateBasketItem,
+} from '@/features/cart/api/basketApi';
+import type { RawBasket } from '@/features/cart/types/cart-types';
+import { extractErrorMessage } from '@/shared/lib/api/client';
 import { MAX_PAYMENT_AMOUNT } from '@/shared/lib/payment';
 
 export interface CartLine {
@@ -14,168 +24,224 @@ export interface CartLine {
 }
 
 interface CartState {
+  /** Sunucudan gelen sepet kalemleri. Tek doğru kaynak basket-service. */
   items: CartLine[];
-  /** Bir sonraki siparişe ayrılan kalemler (yalnızca local'de tutulur). */
+  /**
+   * Limit aşımında bir sonraki siparişe ayrılan kalemler.
+   * Sadece bellekte tutulur; sayfa yenilenince temizlenir.
+   */
   saved: CartLine[];
-  /** Sunucudan gelen sepete state'i ezerek bağla. */
-  setLines: (lines: CartLine[]) => void;
-  add: (item: Omit<CartLine, 'quantity'>, qty?: number) => void;
-  setQuantity: (productId: string, qty: number) => void;
-  remove: (productId: string) => void;
-  clear: () => void;
+  /** İlk hydrate tamamlandı mı? */
+  hydrated: boolean;
+  /** API çağrısı sürüyor mu? */
+  isLoading: boolean;
+
+  /** Backend basket-service'den sepeti çekip state'e ezerek bağlar. */
+  hydrate: () => Promise<void>;
+  /** Logout'ta state'i temizler (sunucuya istek atmaz). */
+  reset: () => void;
+  add: (item: Omit<CartLine, 'quantity'>, qty?: number) => Promise<boolean>;
+  setQuantity: (productId: string, qty: number) => Promise<void>;
+  remove: (productId: string) => Promise<void>;
+  clear: () => Promise<void>;
   total: () => number;
-  /** Limiti aşan kalemleri otomatik olarak "sonraki sipariş"e ayırır. */
-  autoSplit: () => number;
-  /** Ayrılan kalemden 1 adet sepete geri alır. */
-  restoreSaved: (productId: string, qty?: number) => void;
-  /** Ayrılan kalemi tamamen siler. */
+  autoSplit: () => Promise<number>;
+  restoreSaved: (productId: string, qty?: number) => Promise<void>;
   removeSaved: (productId: string) => void;
 }
 
 const isAuthenticated = () => !!useAuthStore.getState().tokens?.accessToken;
 
-/**
- * Backend basket-service'i fire-and-forget tetikler. Login yoksa hiçbir şey yapmaz
- * (anonim sepet localStorage'da kalır). Hatalar konsola düşer; UI optimistik kalır.
- */
-function syncBackend(action: () => Promise<unknown>) {
-  if (typeof window === 'undefined') return;
-  if (!isAuthenticated()) return;
-  void action().catch((err) => {
-    console.error('[basket] sync failed', err);
+const requireAuth = (): boolean => {
+  if (!isAuthenticated()) {
+    toast.error('Sepete erişmek için giriş yap');
+    return false;
+  }
+  return true;
+};
+
+const mapItems = (raw: RawBasket): CartLine[] =>
+  (raw.items ?? []).map((item) => ({
+    productId: item.productId,
+    name: item.productName,
+    price: item.unitPrice,
+    quantity: item.quantity,
+  }));
+
+/** Sunucu cevabı thumbnail taşımıyor; mevcut state'tekileri eşle. */
+function mergeThumbnails(prev: CartLine[], next: CartLine[]): CartLine[] {
+  if (prev.length === 0) return next;
+  return next.map((line) => {
+    const existing = prev.find((p) => p.productId === line.productId);
+    return existing?.thumbnail ? { ...line, thumbnail: existing.thumbnail } : line;
   });
 }
 
-export const useCartStore = create<CartState>()(
-  persist(
-    (set, get) => ({
-      items: [],
-      setLines: (lines) => set({ items: lines }),
-      add: (item, qty = 1) => {
-        set((s) => {
-          const existing = s.items.find((i) => i.productId === item.productId);
-          if (existing) {
-            return {
-              items: s.items.map((i) =>
-                i.productId === item.productId ? { ...i, quantity: i.quantity + qty } : i,
-              ),
-            };
-          }
-          return { items: [...s.items, { ...item, quantity: qty }] };
-        });
-        syncBackend(async () => {
-          const { basketApi } = await import('@/features/cart/api/basketApi');
-          return basketApi.add({
-            productId: item.productId,
-            productName: item.name,
-            quantity: qty,
-            unitPrice: item.price,
-          });
-        });
-      },
-      setQuantity: (productId, qty) => {
-        set((s) => ({
-          items:
-            qty <= 0
-              ? s.items.filter((i) => i.productId !== productId)
-              : s.items.map((i) => (i.productId === productId ? { ...i, quantity: qty } : i)),
-        }));
-        syncBackend(async () => {
-          const { basketApi } = await import('@/features/cart/api/basketApi');
-          return basketApi.update(productId, qty);
-        });
-      },
-      remove: (productId) => {
-        set((s) => ({ items: s.items.filter((i) => i.productId !== productId) }));
-        syncBackend(async () => {
-          const { basketApi } = await import('@/features/cart/api/basketApi');
-          return basketApi.remove(productId);
-        });
-      },
-      clear: () => {
-        set({ items: [] });
-        syncBackend(async () => {
-          const { basketApi } = await import('@/features/cart/api/basketApi');
-          return basketApi.clear();
-        });
-      },
-      total: () => get().items.reduce((acc, i) => acc + i.price * i.quantity, 0),
-      saved: [],
-      autoSplit: () => {
-        const state = get();
-        const items = state.items.map((i) => ({ ...i }));
-        const saved = state.saved.map((i) => ({ ...i }));
-        let total = items.reduce((a, i) => a + i.price * i.quantity, 0);
-        let moved = 0;
-        while (total >= MAX_PAYMENT_AMOUNT && items.length > 0) {
-          const idx = items.reduce((m, it, i, arr) => (it.price > arr[m].price ? i : m), 0);
-          const line = items[idx];
-          line.quantity -= 1;
-          total -= line.price;
-          moved += 1;
-          const dest = saved.find((s) => s.productId === line.productId);
-          if (dest) dest.quantity += 1;
-          else saved.push({ ...line, quantity: 1 });
-          if (line.quantity <= 0) items.splice(idx, 1);
-        }
-        if (moved === 0) return 0;
-        set({ items, saved });
-        syncBackend(async () => {
-          const { basketApi } = await import('@/features/cart/api/basketApi');
-          return basketApi.syncFromLocal(items);
-        });
-        return moved;
-      },
-      restoreSaved: (productId, qty = 1) => {
-        const state = get();
-        const src = state.saved.find((s) => s.productId === productId);
-        if (!src) return;
-        const take = Math.min(qty, src.quantity);
-        const saved = state.saved
-          .map((s) => (s.productId === productId ? { ...s, quantity: s.quantity - take } : s))
-          .filter((s) => s.quantity > 0);
-        const existing = state.items.find((i) => i.productId === productId);
-        const items = existing
-          ? state.items.map((i) =>
-              i.productId === productId ? { ...i, quantity: i.quantity + take } : i,
-            )
-          : [...state.items, { ...src, quantity: take }];
-        set({ items, saved });
-        syncBackend(async () => {
-          const { basketApi } = await import('@/features/cart/api/basketApi');
-          return basketApi.syncFromLocal(items);
-        });
-      },
-      removeSaved: (productId) => {
-        set((s) => ({ saved: s.saved.filter((i) => i.productId !== productId) }));
-      },
-    }),
-    { name: 'sepetify-cart' },
-  ),
-);
+export const useCartStore = create<CartState>((set, get) => ({
+  items: [],
+  saved: [],
+  hydrated: false,
+  isLoading: false,
 
-/**
- * Login sonrası ya da uygulama mount olurken çağrılır. Önce yereldeki anonim
- * sepeti backend'e push eder, sonra backend'i kaynak alarak state'i ezer.
- */
-export async function hydrateCartFromServer(): Promise<void> {
-  if (typeof window === 'undefined') return;
-  if (!isAuthenticated()) return;
-  const { basketApi } = await import('@/features/cart/api/basketApi');
-  try {
-    const local = useCartStore.getState().items;
-    if (local.length > 0) {
-      await basketApi.syncFromLocal(local);
+  hydrate: async () => {
+    if (!isAuthenticated()) {
+      set({ items: [], saved: [], hydrated: true, isLoading: false });
+      return;
     }
-    const remote = await basketApi.me();
-    const lines: CartLine[] = (remote.items ?? []).map((row) => ({
-      productId: row.productId,
-      name: row.productName,
-      price: row.unitPrice,
-      quantity: row.quantity,
-    }));
-    useCartStore.getState().setLines(lines);
-  } catch (err) {
-    console.error('[basket] hydrate failed', err);
-  }
+    set({ isLoading: true });
+    try {
+      const remote = await getMyBasket();
+      set((s) => ({
+        items: mergeThumbnails(s.items, mapItems(remote)),
+        hydrated: true,
+        isLoading: false,
+      }));
+    } catch (err) {
+      console.error('[basket] hydrate failed', err);
+      set({ hydrated: true, isLoading: false });
+    }
+  },
+
+  reset: () => set({ items: [], saved: [], hydrated: false, isLoading: false }),
+
+  add: async (item, qty = 1) => {
+    if (!requireAuth()) return false;
+    set({ isLoading: true });
+    try {
+      const remote = await addBasketItem({
+        productId: item.productId,
+        productName: item.name,
+        quantity: qty,
+        unitPrice: item.price,
+      });
+      const next = mapItems(remote).map((line) =>
+        line.productId === item.productId && item.thumbnail
+          ? { ...line, thumbnail: item.thumbnail }
+          : line,
+      );
+      set((s) => ({ items: mergeThumbnails(s.items, next), isLoading: false }));
+      return true;
+    } catch (err) {
+      set({ isLoading: false });
+      toast.error(extractErrorMessage(err, 'Sepete eklenemedi'));
+      return false;
+    }
+  },
+
+  setQuantity: async (productId, qty) => {
+    if (!requireAuth()) return;
+    set({ isLoading: true });
+    try {
+      const remote =
+        qty <= 0 ? await removeBasketItem(productId) : await updateBasketItem(productId, qty);
+      set((s) => ({ items: mergeThumbnails(s.items, mapItems(remote)), isLoading: false }));
+    } catch (err) {
+      set({ isLoading: false });
+      toast.error(extractErrorMessage(err, 'Sepet güncellenemedi'));
+    }
+  },
+
+  remove: async (productId) => {
+    if (!requireAuth()) return;
+    set({ isLoading: true });
+    try {
+      const remote = await removeBasketItem(productId);
+      set((s) => ({ items: mergeThumbnails(s.items, mapItems(remote)), isLoading: false }));
+    } catch (err) {
+      set({ isLoading: false });
+      toast.error(extractErrorMessage(err, 'Ürün kaldırılamadı'));
+    }
+  },
+
+  clear: async () => {
+    if (!requireAuth()) return;
+    set({ isLoading: true });
+    try {
+      await clearBasket();
+      set({ items: [], isLoading: false });
+    } catch (err) {
+      set({ isLoading: false });
+      toast.error(extractErrorMessage(err, 'Sepet temizlenemedi'));
+    }
+  },
+
+  total: () => get().items.reduce((acc, line) => acc + line.price * line.quantity, 0),
+
+  autoSplit: async () => {
+    const state = get();
+    const previousItems = state.items.map((i) => ({ ...i }));
+    const items = state.items.map((i) => ({ ...i }));
+    const saved = state.saved.map((i) => ({ ...i }));
+    let total = items.reduce((a, i) => a + i.price * i.quantity, 0);
+    let moved = 0;
+    while (total >= MAX_PAYMENT_AMOUNT && items.length > 0) {
+      const idx = items.reduce((m, it, i, arr) => (it.price > arr[m].price ? i : m), 0);
+      const line = items[idx];
+      line.quantity -= 1;
+      total -= line.price;
+      moved += 1;
+      const dest = saved.find((s) => s.productId === line.productId);
+      if (dest) dest.quantity += 1;
+      else saved.push({ ...line, quantity: 1 });
+      if (line.quantity <= 0) items.splice(idx, 1);
+    }
+    if (moved === 0) return 0;
+    set({ saved });
+    if (!isAuthenticated()) {
+      set({ items });
+      return moved;
+    }
+    try {
+      for (const prev of previousItems) {
+        const adjusted = items.find((i) => i.productId === prev.productId);
+        if (!adjusted) {
+          await removeBasketItem(prev.productId);
+        } else if (adjusted.quantity !== prev.quantity) {
+          await updateBasketItem(prev.productId, adjusted.quantity);
+        }
+      }
+      const remote = await getMyBasket();
+      set((s) => ({ items: mergeThumbnails(s.items, mapItems(remote)) }));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'Sepet senkronlanamadı'));
+    }
+    return moved;
+  },
+
+  restoreSaved: async (productId, qty = 1) => {
+    const state = get();
+    const src = state.saved.find((s) => s.productId === productId);
+    if (!src) return;
+    const take = Math.min(qty, src.quantity);
+    const saved = state.saved
+      .map((s) => (s.productId === productId ? { ...s, quantity: s.quantity - take } : s))
+      .filter((s) => s.quantity > 0);
+    set({ saved });
+    if (!isAuthenticated()) return;
+    try {
+      const remote = await addBasketItem({
+        productId: src.productId,
+        productName: src.name,
+        quantity: take,
+        unitPrice: src.price,
+      });
+      const next = mapItems(remote).map((line) =>
+        line.productId === productId && src.thumbnail
+          ? { ...line, thumbnail: src.thumbnail }
+          : line,
+      );
+      set((s) => ({ items: mergeThumbnails(s.items, next) }));
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'Sepete geri alınamadı'));
+    }
+  },
+
+  removeSaved: (productId) => {
+    set((s) => ({ saved: s.saved.filter((i) => i.productId !== productId) }));
+  },
+}));
+
+/** Geriye dönük yardımcı; CartHydrator hâlâ bunu kullanıyor. */
+export async function hydrateCartFromServer(): Promise<void> {
+  await useCartStore.getState().hydrate();
 }

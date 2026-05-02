@@ -9,9 +9,9 @@ import { toast } from 'sonner';
 
 import { useAuthStore } from '@/features/auth/store';
 import { useCartStore } from '@/features/cart/store';
-import { basketApi } from '@/features/cart/api/basketApi';
-import { addressApi } from '@/features/addresses/api/addressApi';
-import { orderApi } from '@/features/orders/api/orderApi';
+import { getMyBasket } from '@/features/cart/api/basketApi';
+import { getMyAddresses } from '@/features/addresses/api/addressApi';
+import { checkoutOrder } from '@/features/orders/api/orderApi';
 import { extractErrorMessage } from '@/shared/lib/api/client';
 import { MAX_PAYMENT_AMOUNT, MAX_PAYMENT_AMOUNT_MESSAGE } from '@/shared/lib/payment';
 import { Button } from '@/shared/components/ui/button';
@@ -21,14 +21,39 @@ import { formatCurrency } from '@/shared/lib/utils';
 export default function CheckoutPage() {
   const router = useRouter();
   const tokens = useAuthStore((state) => state.tokens);
-  const cartItems = useCartStore((state) => state.items);
-  const cartTotal = useCartStore((state) => state.total());
+  const setLines = useCartStore.setState;
 
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
+  // Sepeti API'den (basket-service) tek kaynak olarak çekiyoruz; localStorage yok.
+  const basketQuery = useQuery({
+    queryKey: ['basket', 'me'],
+    queryFn: getMyBasket,
+    enabled: !!tokens,
+    refetchOnMount: 'always',
+  });
+  const cartItems = (basketQuery.data?.items ?? []).map((line) => ({
+    productId: line.productId,
+    name: line.productName,
+    price: line.unitPrice,
+    quantity: line.quantity,
+  }));
+  const cartTotal = cartItems.reduce((acc, l) => acc + l.price * l.quantity, 0);
+
+  // Cart store'u checkout'taki API verisiyle senkron tut (header sayacı vb.)
+  useEffect(() => {
+    if (basketQuery.data) {
+      setLines({
+        items: cartItems,
+        hydrated: true,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [basketQuery.data]);
+
   const addressesQuery = useQuery({
     queryKey: ['addresses'],
-    queryFn: addressApi.list,
+    queryFn: getMyAddresses,
     enabled: !!tokens,
   });
 
@@ -44,8 +69,8 @@ export default function CheckoutPage() {
       if (cartTotal >= MAX_PAYMENT_AMOUNT) {
         throw new Error(MAX_PAYMENT_AMOUNT_MESSAGE);
       }
-      await basketApi.syncFromLocal(cartItems);
-      return orderApi.checkout({ addressId });
+      // Sepet zaten basket-service'de duruyor; sadece checkout'u tetikle.
+      return checkoutOrder({ addressId });
     },
     onSuccess: (response) => {
       toast.success('Ödeme sayfasına yönlendiriliyorsun…');
@@ -62,6 +87,15 @@ export default function CheckoutPage() {
         <Button asChild className="mt-6">
           <Link href="/auth?tab=login">Giriş yap</Link>
         </Button>
+      </div>
+    );
+  }
+
+  if (basketQuery.isLoading) {
+    return (
+      <div className="container py-20 text-center text-muted-foreground">
+        <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+        <p className="mt-3 text-sm">Sepet yükleniyor…</p>
       </div>
     );
   }

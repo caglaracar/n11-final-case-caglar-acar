@@ -4,8 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
-import { bannerApi } from '@/features/banners/api/bannerApi';
-import type { Banner } from '@/features/banners/types';
+import { getActiveBanners } from '@/features/banners/api/bannerApi';
+import type { Banner } from '@/features/banners/types/banners-types';
 import { cn } from '@/shared/lib/utils';
 
 const FALLBACK: Banner[] = [
@@ -29,7 +29,7 @@ const AUTOPLAY_MS = 6500;
 export function HeroSlider() {
   const { data } = useQuery({
     queryKey: ['banners'],
-    queryFn: () => bannerApi.findAll().catch(() => [] as Banner[]),
+    queryFn: () => getActiveBanners().catch(() => [] as Banner[]),
     staleTime: 5 * 60 * 1000,
   });
 

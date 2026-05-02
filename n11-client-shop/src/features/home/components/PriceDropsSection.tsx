@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { TrendingDown } from 'lucide-react';
-import { productApi } from '@/features/products/api/productApi';
+import { getPriceDropProducts } from '@/features/products/api/productApi';
 import { ProductMiniCard } from '@/features/products/components/ProductMiniCard';
 import { HorizontalScroller } from '@/shared/components/HorizontalScroller';
 import { SectionHeader } from '@/shared/components/SectionHeader';
@@ -10,7 +10,7 @@ import { SectionHeader } from '@/shared/components/SectionHeader';
 export function PriceDropsSection() {
   const { data } = useQuery({
     queryKey: ['products', 'price-drops'],
-    queryFn: () => productApi.priceDrops(12).catch(() => []),
+    queryFn: () => getPriceDropProducts(12).catch(() => []),
     staleTime: 2 * 60 * 1000,
   });
 

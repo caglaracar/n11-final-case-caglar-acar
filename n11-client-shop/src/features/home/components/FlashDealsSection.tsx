@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Zap } from 'lucide-react';
-import { productApi } from '@/features/products/api/productApi';
+import { getFlashDealProducts } from '@/features/products/api/productApi';
 import { ProductMiniCard } from '@/features/products/components/ProductMiniCard';
 import { HorizontalScroller } from '@/shared/components/HorizontalScroller';
 
@@ -22,7 +23,7 @@ function diffParts(ms: number) {
 export function FlashDealsSection() {
   const { data } = useQuery({
     queryKey: ['products', 'flash-deals'],
-    queryFn: () => productApi.flashDeals().catch(() => []),
+    queryFn: () => getFlashDealProducts().catch(() => []),
     staleTime: 60 * 1000,
   });
 
@@ -82,12 +83,12 @@ export function FlashDealsSection() {
             )}
           </div>
         </div>
-        <a
+        <Link
           href="/products?deals=1"
           className="shrink-0 whitespace-nowrap text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700"
         >
           Tümünü gör →
-        </a>
+        </Link>
       </div>
 
       <HorizontalScroller>
