@@ -1,7 +1,6 @@
 export type OrderStatus =
   | 'PENDING'
   | 'PAID'
-  | 'PROCESSING'
   | 'SHIPPED'
   | 'DELIVERED'
   | 'CANCELLED'
@@ -15,21 +14,23 @@ export interface OrderItem {
 }
 
 export interface Order {
-  id: string;
-  userId?: string;
-  userEmail?: string;
+  id: number;
+  authId?: number;
+  customerEmail?: string;
+  customerName?: string;
   status: OrderStatus;
   totalAmount: number;
   currency: string;
+  shippingAddress?: string;
+  shippingCity?: string;
   items: OrderItem[];
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export const ORDER_STATUSES: OrderStatus[] = [
   'PENDING',
   'PAID',
-  'PROCESSING',
   'SHIPPED',
   'DELIVERED',
   'CANCELLED',

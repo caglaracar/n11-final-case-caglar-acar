@@ -3,6 +3,8 @@ package com.caglar.order.service;
 import com.caglar.order.dto.request.CheckoutRequestDto;
 import com.caglar.order.dto.response.CheckoutResponseDto;
 import com.caglar.order.dto.response.OrderResponseDto;
+import com.caglar.order.enums.OrderStatus;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -19,4 +21,8 @@ public interface OrderService {
     void onPaymentCompleted(Long orderId);
 
     void onPaymentFailed(Long orderId, String reason);
+
+    Page<OrderResponseDto> adminGetOrders(int page, int size, OrderStatus status);
+
+    OrderResponseDto adminUpdateStatus(Long id, OrderStatus status);
 }

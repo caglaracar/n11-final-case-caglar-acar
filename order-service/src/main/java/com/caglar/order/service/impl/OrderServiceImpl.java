@@ -3,6 +3,9 @@ package com.caglar.order.service.impl;
 import com.caglar.common.event.OrderPlacedEvent;
 import com.caglar.common.exception.BusinessException;
 import com.caglar.common.exception.ErrorType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import com.caglar.order.client.BasketClient;
 import com.caglar.order.client.PaymentClient;
 import com.caglar.order.client.ProductStockClient;
@@ -172,6 +175,23 @@ public class OrderServiceImpl implements OrderService {
                 order.getCustomerName(), order.getTotalAmount(), order.getCurrency()));
         eventPublisher.publishConfirmationEmail(order.getCustomerEmail(),
                 order.getId(), order.getTotalAmount(), order.getCurrency());
+    }
+
+    @Override
+    public Page<OrderResponseDto> adminGetOrders(int page, int size, OrderStatus status) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        Page<Order> orders = status != null
+                ? orderRepository.findAllByStatusOrderByIdDesc(status, pageable)
+                : orderRepository.findAllByOrderByIdDesc(pageable);
+        return orders.map(OrderMapper::toResponse);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponseDto adminUpdateStatus(Long id, OrderStatus status) {
+        Order order = findOrderOrThrow(id);
+        order.setStatus(status);
+        return OrderMapper.toResponse(orderRepository.save(order));
     }
 
     private void safeReleaseStock(Order order) {

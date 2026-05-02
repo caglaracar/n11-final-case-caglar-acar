@@ -23,7 +23,7 @@ export function OrdersPage() {
   });
 
   const updateStatus = useMutation({
-    mutationFn: ({ id, next }: { id: string; next: OrderStatus }) =>
+    mutationFn: ({ id, next }: { id: number; next: OrderStatus }) =>
       orderApi.updateStatus(id, next),
     onSuccess: () => {
       toast.success('Durum güncellendi');
@@ -35,9 +35,9 @@ export function OrdersPage() {
     {
       key: 'id',
       header: 'Sipariş',
-      cell: (o) => <span className="font-mono text-xs">#{o.id.slice(0, 10)}</span>,
+      cell: (o) => <span className="font-mono text-xs">#{o.id}</span>,
     },
-    { key: 'userEmail', header: 'Müşteri', cell: (o) => o.userEmail ?? '—' },
+    { key: 'customerEmail', header: 'Müşteri', cell: (o) => o.customerEmail ?? '—' },
     {
       key: 'totalAmount',
       header: 'Tutar',
@@ -47,7 +47,7 @@ export function OrdersPage() {
     {
       key: 'createdAt',
       header: 'Oluşturma',
-      cell: (o) => (o.createdAt ? formatDate(o.createdAt) : '—'),
+      cell: (o) => (o.createdAt ? formatDate(new Date(o.createdAt)) : '—'),
     },
     {
       key: 'status',
@@ -109,7 +109,7 @@ export function OrdersPage() {
         columns={columns}
         rows={data?.content}
         isLoading={isLoading}
-        rowKey={(o) => o.id}
+        rowKey={(o) => String(o.id)}
         pagination={
           data
             ? {

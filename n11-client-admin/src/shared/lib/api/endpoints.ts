@@ -41,8 +41,7 @@ export const ENDPOINTS = {
   },
   order: {
     adminAll: '/dev/v1/admin/orders',
-    adminUpdateStatus: (id: string) => `/dev/v1/admin/orders/${id}/status`,
-    stats: '/dev/v1/admin/stats',
+    adminUpdateStatus: (id: number) => `/dev/v1/admin/orders/${id}/status`,
   },
   user: {
     me: '/dev/v1/user-profile/me',

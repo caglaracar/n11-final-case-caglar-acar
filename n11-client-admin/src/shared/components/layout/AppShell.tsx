@@ -2,7 +2,6 @@ import { NavLink, Outlet } from 'react-router-dom';
 import {
   Award,
   Image as ImageIcon,
-  LayoutDashboard,
   LogOut,
   Package,
   Percent,
@@ -11,6 +10,7 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
+
 import { Logo } from '@/shared/components/Logo';
 import { Button } from '@/shared/components/ui/button';
 import { useAuthStore } from '@/features/auth/store';
@@ -20,7 +20,7 @@ import { cn } from '@/shared/lib/utils';
 interface NavItem {
   to: string;
   label: string;
-  icon: typeof LayoutDashboard;
+  icon: typeof Package;
 }
 
 interface NavGroup {
@@ -29,10 +29,6 @@ interface NavGroup {
 }
 
 const NAV: NavGroup[] = [
-  {
-    label: 'Genel',
-    items: [{ to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }],
-  },
   {
     label: 'Katalog',
     items: [

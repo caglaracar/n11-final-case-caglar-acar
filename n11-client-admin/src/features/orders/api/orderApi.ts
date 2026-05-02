@@ -13,7 +13,7 @@ export const orderApi = {
     unwrap<Page<Order>>(
       api.get<BaseResponse<Page<Order>>>(ENDPOINTS.order.adminAll, { params }),
     ),
-  updateStatus: (id: string, status: OrderStatus) =>
+  updateStatus: (id: number, status: OrderStatus) =>
     unwrap<Order>(
       api.post<BaseResponse<Order>>(
         ENDPOINTS.order.adminUpdateStatus(id),
