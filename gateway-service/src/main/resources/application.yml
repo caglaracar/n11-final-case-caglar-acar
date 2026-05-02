@@ -27,11 +27,11 @@ spring:
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/dev/v1/user-profile/**,/dev/v1/wishlist/**,/dev/v1/address/**
+            - Path=/dev/v1/user-profile/**,/dev/v1/address/**
         - id: product-service
           uri: lb://product-service
           predicates:
-            - Path=/dev/v1/product/**,/dev/v1/review/**,/dev/v1/blog/**,/dev/v1/banner/**
+            - Path=/dev/v1/product/**,/dev/v1/banner/**
         - id: basket-service
           uri: lb://basket-service
           predicates:
@@ -39,7 +39,7 @@ spring:
         - id: order-service
           uri: lb://order-service
           predicates:
-            - Path=/dev/v1/order/**,/dev/v1/admin/**
+            - Path=/dev/v1/order/**
         - id: payment-service
           uri: lb://payment-service
           predicates:
@@ -69,8 +69,7 @@ gateway:
         - /dev/v1/auth/login
         - /dev/v1/auth/refresh
         - /dev/v1/contact/submit
-        - /dev/v1/order/track
-        - /dev/v1/order/confirm-delivery
+        - /dev/v1/payment/iyzico/callback
       prefixes:
         - /actuator
         - /v3/api-docs
@@ -83,8 +82,6 @@ gateway:
         - /dev/v1/product/search/trending
         - /dev/v1/product/category/find-all
         - /dev/v1/product/brand/find-all
-        - /dev/v1/review/product
-        - /dev/v1/blog
         - /dev/v1/banner/find-all
 
 management:
