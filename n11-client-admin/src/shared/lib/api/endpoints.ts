@@ -1,0 +1,51 @@
+export const ENDPOINTS = {
+  auth: {
+    login: '/dev/v1/auth/login',
+    register: '/dev/v1/auth/register',
+    adminRegister: '/dev/v1/auth/admin/register',
+    refresh: '/dev/v1/auth/refresh',
+    logout: '/dev/v1/auth/logout',
+  },
+  product: {
+    findAll: '/dev/v1/product/find-all',
+    findById: (id: string) => `/dev/v1/product/find-by-id/${id}`,
+    create: '/dev/v1/product/create',
+    update: (id: string) => `/dev/v1/product/update/${id}`,
+    delete: (id: string) => `/dev/v1/product/delete/${id}`,
+    popular: '/dev/v1/product/popular',
+    flashDeals: '/dev/v1/product/flash-deals',
+    priceDrops: '/dev/v1/product/price-drops',
+    setFlashDeal: (id: string) => `/dev/v1/product/${id}/flash-deal`,
+    clearFlashDeal: (id: string) => `/dev/v1/product/${id}/flash-deal`,
+    applyPriceDrop: (id: string) => `/dev/v1/product/${id}/price-drop`,
+    clearPriceDrop: (id: string) => `/dev/v1/product/${id}/price-drop`,
+  },
+  category: {
+    findAll: '/dev/v1/product/category/find-all',
+    create: '/dev/v1/product/category/create',
+    update: (id: string) => `/dev/v1/product/category/update/${id}`,
+    delete: (id: string) => `/dev/v1/product/category/delete/${id}`,
+  },
+  brand: {
+    findAll: '/dev/v1/product/brand/find-all',
+    create: '/dev/v1/product/brand/create',
+    update: (id: string) => `/dev/v1/product/brand/update/${id}`,
+    delete: (id: string) => `/dev/v1/product/brand/delete/${id}`,
+  },
+  banner: {
+    adminFindAll: '/dev/v1/banner/admin/find-all',
+    findById: (id: string) => `/dev/v1/banner/find-by-id/${id}`,
+    create: '/dev/v1/banner/create',
+    update: (id: string) => `/dev/v1/banner/update/${id}`,
+    delete: (id: string) => `/dev/v1/banner/delete/${id}`,
+  },
+  order: {
+    adminAll: '/dev/v1/admin/orders',
+    adminUpdateStatus: (id: string) => `/dev/v1/admin/orders/${id}/status`,
+    stats: '/dev/v1/admin/stats',
+  },
+  user: {
+    me: '/dev/v1/user-profile/me',
+    search: '/dev/v1/user-profile/search',
+  },
+} as const;
