@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import { profileApi, type UpdateProfilePayload, type UserProfile } from '@/features/profile/api/profileApi';
 import { useAuthStore, type AuthUser } from '@/features/auth/store';
+import { useAuthHydrated } from '@/features/auth/hooks/useAuthHydrated';
 import { extractErrorMessage } from '@/shared/lib/api/client';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -48,12 +49,13 @@ export default function ProfilePage() {
   const queryClient = useQueryClient();
   const tokens = useAuthStore((s) => s.tokens);
   const setUser = useAuthStore((s) => s.setUser);
+  const hydrated = useAuthHydrated();
 
   const [form, setForm] = useState<UpdateProfilePayload>(EMPTY_FORM);
 
   useEffect(() => {
-    if (!tokens) router.replace('/auth?tab=login');
-  }, [tokens, router]);
+    if (hydrated && !tokens) router.replace('/auth?tab=login');
+  }, [hydrated, tokens, router]);
 
   const profileQuery = useQuery({
     queryKey: ['profile', 'me'],
