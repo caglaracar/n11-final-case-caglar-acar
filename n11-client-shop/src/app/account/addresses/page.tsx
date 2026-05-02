@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Star, Trash2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ShoppingBag, Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { addressApi } from '@/features/addresses/api/addressApi';
@@ -26,19 +27,33 @@ const EMPTY_FORM: AddressInput = {
 };
 
 export default function AddressesPage() {
+  return (
+    <Suspense fallback={null}>
+      <AddressesPageInner />
+    </Suspense>
+  );
+}
+
+function AddressesPageInner() {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromCheckout = searchParams.get('from') === 'checkout';
   const [form, setForm] = useState<AddressInput>(EMPTY_FORM);
 
   const addressesQuery = useQuery({ queryKey: ['addresses'], queryFn: addressApi.list });
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['addresses'] });
 
+  const goBackToCheckout = () => router.push('/checkout');
+
   const createMutation = useMutation({
     mutationFn: (payload: AddressInput) => addressApi.create(payload),
     onSuccess: () => {
-      toast.success('Adres eklendi');
+      toast.success(fromCheckout ? 'Adres eklendi, ödemeye dönüyorsun' : 'Adres eklendi');
       setForm(EMPTY_FORM);
       invalidate();
+      if (fromCheckout) goBackToCheckout();
     },
     onError: (error) => toast.error(extractErrorMessage(error, 'Adres eklenemedi')),
   });
@@ -61,9 +76,38 @@ export default function AddressesPage() {
     onError: (error) => toast.error(extractErrorMessage(error, 'Adres güncellenemedi')),
   });
 
+  const selectAndContinueMutation = useMutation({
+    mutationFn: (id: string) => addressApi.setDefault(id),
+    onSuccess: () => {
+      toast.success('Adres seçildi, ödemeye dönüyorsun');
+      invalidate();
+      goBackToCheckout();
+    },
+    onError: (error) => toast.error(extractErrorMessage(error, 'Adres seçilemedi')),
+  });
+
   return (
     <div className="container py-10">
-      <h1 className="text-3xl font-bold tracking-tight">Adreslerim</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold tracking-tight">Adreslerim</h1>
+        {fromCheckout && (
+          <Button variant="outline" size="sm" onClick={goBackToCheckout}>
+            <ShoppingBag className="mr-1 h-4 w-4" /> Ödemeye dön
+          </Button>
+        )}
+      </div>
+
+      {fromCheckout && (
+        <div className="mt-4 flex items-start gap-3 rounded-lg border border-brand-200 bg-brand-50/60 p-4 text-sm dark:border-brand-900/50 dark:bg-brand-950/30">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-600" />
+          <div className="flex-1">
+            <p className="font-semibold text-brand-700 dark:text-brand-300">Ödeme akışındasın</p>
+            <p className="mt-0.5 text-muted-foreground">
+              Bir adres seç veya yenisini ekle. Seçtiğin adres varsayılan yapılıp ödeme sayfasına dönülecek.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_420px]">
         <ul className="space-y-3">
@@ -71,8 +115,11 @@ export default function AddressesPage() {
             <AddressRow
               key={address.id}
               address={address}
+              showSelect={fromCheckout}
+              isSelecting={selectAndContinueMutation.isPending}
               onDelete={() => removeMutation.mutate(address.id)}
               onSetDefault={() => setDefaultMutation.mutate(address.id)}
+              onSelectAndContinue={() => selectAndContinueMutation.mutate(address.id)}
             />
           ))}
           {addressesQuery.data?.length === 0 && (
@@ -122,12 +169,18 @@ export default function AddressesPage() {
 
 function AddressRow({
   address,
+  showSelect,
+  isSelecting,
   onDelete,
   onSetDefault,
+  onSelectAndContinue,
 }: {
   address: Address;
+  showSelect: boolean;
+  isSelecting: boolean;
   onDelete: () => void;
   onSetDefault: () => void;
+  onSelectAndContinue: () => void;
 }) {
   return (
     <li>
@@ -152,6 +205,11 @@ function AddressRow({
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
+            {showSelect && (
+              <Button size="sm" onClick={onSelectAndContinue} disabled={isSelecting}>
+                Seç ve devam et <ArrowRight className="ml-1 h-4 w-4" />
+              </Button>
+            )}
             {!address.isDefault && (
               <Button variant="ghost" size="sm" onClick={onSetDefault}>
                 <Star className="mr-1 h-4 w-4" /> Varsayılan

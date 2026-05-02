@@ -92,7 +92,7 @@ export default function CheckoutPage() {
               <MapPin className="h-5 w-5 text-brand-600" /> Teslimat adresi
             </CardTitle>
             <Button asChild variant="ghost" size="sm">
-              <Link href="/account/addresses">Adresleri yönet</Link>
+              <Link href="/account/addresses?from=checkout">Adresleri yönet</Link>
             </Button>
           </CardHeader>
           <CardContent>
@@ -104,7 +104,7 @@ export default function CheckoutPage() {
                 Kayıtlı adresin yok. Ödemeye geçmek için önce bir teslimat adresi ekle.
                 <div className="mt-4">
                   <Button asChild>
-                    <Link href="/account/addresses">Adres ekle</Link>
+                    <Link href="/account/addresses?from=checkout">Adres ekle</Link>
                   </Button>
                 </div>
               </div>
