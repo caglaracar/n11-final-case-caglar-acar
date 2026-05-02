@@ -12,6 +12,8 @@ public interface OrderRepository extends BaseRepository<Order, Long> {
 
     List<Order> findByAuthIdOrderByIdDesc(Long authId);
 
+    List<Order> findByAuthIdAndStatus(Long authId, OrderStatus status);
+
     Page<Order> findAllByOrderByIdDesc(Pageable pageable);
 
     Page<Order> findAllByStatusOrderByIdDesc(OrderStatus status, Pageable pageable);

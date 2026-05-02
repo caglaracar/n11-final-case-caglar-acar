@@ -54,6 +54,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public CheckoutResponseDto checkout(Long authId, CheckoutRequestDto request) {
+        cancelPendingOrders(authId);
+
         BasketDto basket = fetchBasket();
         UserProfileDto profile = fetchProfile();
         AddressDto shippingAddress = fetchAddress(request.addressId());
@@ -208,6 +210,16 @@ public class OrderServiceImpl implements OrderService {
         Order order = findOrderOrThrow(id);
         order.setStatus(status);
         return OrderMapper.toResponse(orderRepository.save(order));
+    }
+
+    private void cancelPendingOrders(Long authId) {
+        List<Order> pending = orderRepository.findByAuthIdAndStatus(authId, OrderStatus.PENDING);
+        for (Order old : pending) {
+            safeReleaseStock(old);
+            old.setStatus(OrderStatus.CANCELLED);
+            orderRepository.save(old);
+            log.info("Cancelled stale PENDING order={} for authId={}", old.getId(), authId);
+        }
     }
 
     private void safeClearBasket(Long authId) {
