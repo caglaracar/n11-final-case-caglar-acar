@@ -229,6 +229,7 @@ export default function CheckoutPage() {
             <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-700/50 dark:bg-amber-950/40 dark:text-amber-200">
               <p className="font-semibold">Bootcamp değerlendirme · iyzico test kartı</p>
               <ul className="mt-1.5 space-y-0.5 font-mono text-[11px]">
+                <li>Kart sahibi: <strong>John Doe</strong></li>
                 <li>Kart no: <strong>5528 7900 0000 0008</strong></li>
                 <li>SKT: <strong>12/30</strong> · CVC: <strong>123</strong></li>
                 <li>3D-Secure SMS kodu: <strong>283126</strong></li>
