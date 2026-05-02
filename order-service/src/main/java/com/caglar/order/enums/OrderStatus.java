@@ -1,24 +1,16 @@
 package com.caglar.order.enums;
 
 public enum OrderStatus {
-    CREATED,
-    PAYMENT_PENDING,
+    /** Sipariş oluşturuldu, ödeme bekliyor (iyzico checkout açıldı). */
+    PENDING,
+    /** Ödeme tamamlandı. */
     PAID,
-    FAILED,
-    CANCELLED,
+    /** Kargolandı. */
     SHIPPED,
-    DELIVERED;
-
-    /**
-     * Çok basit bir state machine kuralı.
-     */
-    public boolean canTransitionTo(OrderStatus next) {
-        return switch (this) {
-            case CREATED        -> next == PAYMENT_PENDING || next == CANCELLED;
-            case PAYMENT_PENDING -> next == PAID || next == FAILED || next == CANCELLED;
-            case PAID            -> next == SHIPPED || next == CANCELLED;
-            case SHIPPED         -> next == DELIVERED;
-            case FAILED, CANCELLED, DELIVERED -> false;
-        };
-    }
+    /** Teslim edildi. */
+    DELIVERED,
+    /** Kullanıcı iptal etti (sadece PENDING'den geçiş yapılabilir). */
+    CANCELLED,
+    /** Ödeme başarısız oldu (payment.failed eventi). */
+    FAILED
 }

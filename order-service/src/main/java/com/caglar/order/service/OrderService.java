@@ -1,20 +1,26 @@
 package com.caglar.order.service;
 
-import com.caglar.order.dto.request.CreateOrderRequestDto;
+import com.caglar.order.dto.request.CheckoutRequestDto;
+import com.caglar.order.dto.response.CheckoutResponseDto;
 import com.caglar.order.dto.response.OrderResponseDto;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface OrderService {
 
-    OrderResponseDto createOrder(Long authId, CreateOrderRequestDto dto);
+    /** Sepetten sipariş oluştur, stok rezerve et, iyzico checkout başlat. */
+    CheckoutResponseDto checkout(Long authId, CheckoutRequestDto dto);
 
-    OrderResponseDto getById(Long id);
+    OrderResponseDto getById(Long authId, Long orderId);
 
-    Page<OrderResponseDto> getMyList(Long authId, Pageable pageable);
+    List<OrderResponseDto> getMyOrders(Long authId);
 
-    OrderResponseDto cancel(Long id);
+    /** Kullanıcı iptali — sadece PENDING durumdaki siparişler için. */
+    OrderResponseDto cancel(Long authId, Long orderId);
 
-    /** Teslim onayı: token doğrulanır, SHIPPED → DELIVERED geçişi yapılır. Public endpoint. */
-    OrderResponseDto confirmDelivery(Long orderId, String token);
+    // --- internal saga callbacks (kafka consumer'dan) ---
+
+    void onPaymentCompleted(Long orderId);
+
+    void onPaymentFailed(Long orderId, String reason);
 }
