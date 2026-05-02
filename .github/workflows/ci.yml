@@ -137,6 +137,9 @@ jobs:
             EXTRA_ENV_VARS=",IYZICO_CALLBACK_URL=${SVC_URL}/dev/v1/payment/iyzico/callback,IYZICO_SUCCESS_REDIRECT=https://sepetify-shop.vercel.app/orders/{orderId}/result,IYZICO_FAILURE_REDIRECT=https://sepetify-shop.vercel.app/orders/{orderId}/result,IYZICO_BASE_URL=https://sandbox-api.iyzipay.com"
             EXTRA_SECRETS=",IYZICO_API_KEY=IYZICO_API_KEY:latest,IYZICO_SECRET_KEY=IYZICO_SECRET_KEY:latest"
           fi
+          if [ "${{ matrix.service }}" = "notification-service" ]; then
+            EXTRA_SECRETS="${EXTRA_SECRETS},MAIL_USERNAME=MAIL_USERNAME:latest,MAIL_PASSWORD=MAIL_PASSWORD:latest"
+          fi
           gcloud run deploy ${{ matrix.service }}-staging \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
             --region=${{ env.REGION }} \
@@ -217,6 +220,9 @@ jobs:
             SVC_URL=$(gcloud run services describe ${{ matrix.service }} --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo "")
             EXTRA_ENV_VARS=",IYZICO_CALLBACK_URL=${SVC_URL}/dev/v1/payment/iyzico/callback,IYZICO_SUCCESS_REDIRECT=https://sepetify-shop.vercel.app/orders/{orderId}/result,IYZICO_FAILURE_REDIRECT=https://sepetify-shop.vercel.app/orders/{orderId}/result,IYZICO_BASE_URL=https://sandbox-api.iyzipay.com"
             EXTRA_SECRETS=",IYZICO_API_KEY=IYZICO_API_KEY:latest,IYZICO_SECRET_KEY=IYZICO_SECRET_KEY:latest"
+          fi
+          if [ "${{ matrix.service }}" = "notification-service" ]; then
+            EXTRA_SECRETS="${EXTRA_SECRETS},MAIL_USERNAME=MAIL_USERNAME:latest,MAIL_PASSWORD=MAIL_PASSWORD:latest"
           fi
           gcloud run deploy ${{ matrix.service }} \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
