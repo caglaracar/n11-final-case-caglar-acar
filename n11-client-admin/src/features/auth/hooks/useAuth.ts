@@ -35,7 +35,7 @@ export function useLogin() {
       const ok = await bootstrapSession(tokens.accessToken, tokens.refreshToken);
       if (ok) {
         toast.success('Hoş geldin!');
-        navigate('/dashboard', { replace: true });
+        navigate('/orders', { replace: true });
       }
     },
   });
@@ -61,7 +61,7 @@ export function useAdminRegister() {
       const ok = await bootstrapSession(tokens.accessToken, tokens.refreshToken);
       if (ok) {
         toast.success('Admin hesabı oluşturuldu, hoş geldin!');
-        navigate('/dashboard', { replace: true });
+        navigate('/orders', { replace: true });
       }
     },
   });

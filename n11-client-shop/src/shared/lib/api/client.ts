@@ -97,8 +97,9 @@ function isProtectedPathname(pathname: string): boolean {
 
 function redirectToLoginIfProtected(): void {
   if (typeof window === 'undefined') return;
-  if (isProtectedPathname(window.location.pathname)) {
-    window.location.href = '/auth?tab=login';
+  const { pathname } = window.location;
+  if (isProtectedPathname(pathname)) {
+    window.location.href = `/auth?tab=login&returnTo=${encodeURIComponent(pathname)}`;
   }
 }
 

@@ -2,6 +2,7 @@
 
 import { forwardRef, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -46,6 +47,8 @@ type RegisterValues = z.infer<typeof registerSchema>;
 
 export function AuthClient({ initial = 'login' }: { initial?: Tab }) {
   const [tab, setTab] = useState<Tab>(initial);
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('returnTo') ?? '/';
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-muted/30 px-4 py-12">
@@ -70,9 +73,9 @@ export function AuthClient({ initial = 'login' }: { initial?: Tab }) {
 
           <div className="mt-6">
             {tab === 'login' ? (
-              <LoginForm onSwitch={() => setTab('register')} />
+              <LoginForm onSwitch={() => setTab('register')} returnTo={returnTo} />
             ) : (
-              <RegisterForm onSwitch={() => setTab('login')} />
+              <RegisterForm onSwitch={() => setTab('login')} returnTo={returnTo} />
             )}
           </div>
         </div>
@@ -120,8 +123,8 @@ function TabSwitch({ value, onChange }: { value: Tab; onChange: (t: Tab) => void
   );
 }
 
-function LoginForm({ onSwitch }: { onSwitch: () => void }) {
-  const { mutate, isPending } = useLogin();
+function LoginForm({ onSwitch, returnTo }: { onSwitch: () => void; returnTo: string }) {
+  const { mutate, isPending } = useLogin(returnTo);
   const [showPwd, setShowPwd] = useState(false);
   const {
     register,
@@ -169,8 +172,8 @@ function LoginForm({ onSwitch }: { onSwitch: () => void }) {
   );
 }
 
-function RegisterForm({ onSwitch }: { onSwitch: () => void }) {
-  const { mutate, isPending } = useRegister();
+function RegisterForm({ onSwitch, returnTo }: { onSwitch: () => void; returnTo: string }) {
+  const { mutate, isPending } = useRegister(returnTo);
   const [showPwd, setShowPwd] = useState(false);
   const [showRePwd, setShowRePwd] = useState(false);
   const {

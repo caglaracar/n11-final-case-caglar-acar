@@ -24,7 +24,7 @@ export default function AccountPage() {
   const hydrated = useAuthHydrated();
 
   useEffect(() => {
-    if (hydrated && !tokens) router.replace('/auth?tab=login');
+    if (hydrated && !tokens) router.replace('/auth?tab=login&returnTo=/account');
   }, [hydrated, tokens, router]);
 
   if (!hydrated || !user) return null;

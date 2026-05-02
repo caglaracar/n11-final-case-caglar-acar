@@ -55,7 +55,7 @@ export default function ProfilePage() {
   const [form, setForm] = useState<UpdateProfilePayload>(EMPTY_FORM);
 
   useEffect(() => {
-    if (hydrated && !tokens) router.replace('/auth?tab=login');
+    if (hydrated && !tokens) router.replace('/auth?tab=login&returnTo=/account/profile');
   }, [hydrated, tokens, router]);
 
   const profileQuery = useQuery({
