@@ -39,7 +39,7 @@ export function ProductMiniCard({ product, variant = 'deal' }: Props) {
   };
 
   return (
-    <div className="group flex w-[160px] shrink-0 flex-col overflow-hidden rounded-xl border bg-card transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-sm md:w-[180px]">
+    <div className="group flex w-[160px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-md md:w-[180px]">
       <Link href={`/products/${product.id}`} className="flex flex-1 flex-col">
         <div className="relative aspect-square overflow-hidden bg-muted">
           {discount > 0 && (
@@ -55,7 +55,7 @@ export function ProductMiniCard({ product, variant = 'deal' }: Props) {
             <img
               src={product.thumbnail}
               alt={product.name}
-              className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+              className="h-full w-full object-contain p-3 transition-transform duration-300 group-hover:scale-[1.03]"
             />
           ) : (
             <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">
