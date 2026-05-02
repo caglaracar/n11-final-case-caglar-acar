@@ -1,0 +1,164 @@
+'use client';
+
+import axios, {
+  AxiosError,
+  type AxiosRequestConfig,
+  type InternalAxiosRequestConfig,
+} from 'axios';
+import { toast } from 'sonner';
+import { useAuthStore, getAccessToken, getRefreshToken } from '@/features/auth/store';
+import { ENDPOINTS } from '@/shared/lib/api/endpoints';
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+
+// ─── Types ────────────────────────────────────────────────────────────
+
+export type BaseResponse<T> = {
+  result: { resultCode: string; resultText?: string };
+  errorMessage?: string | null;
+  data: T;
+};
+
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first?: boolean;
+  last?: boolean;
+}
+
+interface BackendErrorPayload {
+  errorMessage?: string;
+  data?: { message?: string; detail?: Record<string, string> };
+}
+
+interface RetriableConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+  _silent?: boolean;
+}
+
+// ─── Axios instance ───────────────────────────────────────────────────
+
+export const api = axios.create({ baseURL: BASE_URL, timeout: 15_000 });
+
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = getAccessToken();
+  if (token) config.headers.set('Authorization', `Bearer ${token}`);
+  return config;
+});
+
+// ─── Refresh-token rotation ───────────────────────────────────────────
+
+let refreshPromise: Promise<string> | null = null;
+
+async function refreshAccessToken(): Promise<string> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) throw new Error('no_refresh_token');
+
+  type RefreshResponse = {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    tokenType: string;
+  };
+
+  const { data } = await axios.post<BaseResponse<RefreshResponse>>(
+    `${BASE_URL}${ENDPOINTS.auth.refresh}`,
+    { refreshToken },
+    { timeout: 10_000 },
+  );
+  if (!data.data) throw new Error(data.errorMessage ?? 'refresh_failed');
+
+  useAuthStore.getState().setTokens({
+    accessToken: data.data.accessToken,
+    refreshToken: data.data.refreshToken,
+    expiresIn: data.data.expiresIn,
+  });
+  return data.data.accessToken;
+}
+
+function isAuthEndpoint(url: string): boolean {
+  return url.includes('/auth/login')
+    || url.includes('/auth/refresh')
+    || url.includes('/auth/register')
+    || url.includes('/auth/logout');
+}
+
+function isProtectedPathname(pathname: string): boolean {
+  return pathname.startsWith('/account')
+    || pathname.startsWith('/checkout')
+    || pathname.startsWith('/orders');
+}
+
+function redirectToLoginIfProtected(): void {
+  if (typeof window === 'undefined') return;
+  if (isProtectedPathname(window.location.pathname)) {
+    window.location.href = '/auth?tab=login';
+  }
+}
+
+// ─── Response interceptor ─────────────────────────────────────────────
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError<BackendErrorPayload>) => {
+    if (typeof window === 'undefined') return Promise.reject(error);
+
+    const original = error.config as RetriableConfig | undefined;
+    const status = error.response?.status;
+    const requestUrl = original?.url ?? '';
+    const silent = original?._silent === true;
+
+    // 401 → refresh + retry (auth endpoint'leri hariç)
+    if (status === 401 && original && !original._retry && !isAuthEndpoint(requestUrl)) {
+      const hasRefreshToken = !!getRefreshToken();
+      if (hasRefreshToken) {
+        original._retry = true;
+        try {
+          refreshPromise ??= refreshAccessToken().finally(() => {
+            refreshPromise = null;
+          });
+          const freshAccessToken = await refreshPromise;
+          original.headers = {
+            ...(original.headers ?? {}),
+            Authorization: `Bearer ${freshAccessToken}`,
+          };
+          return api.request(original);
+        } catch {
+          useAuthStore.getState().clear();
+          redirectToLoginIfProtected();
+          return Promise.reject(error);
+        }
+      }
+      // refresh token yok: sessizce temizle, sadece korumalı sayfada login'e at
+      useAuthStore.getState().clear();
+      redirectToLoginIfProtected();
+      return Promise.reject(error);
+    }
+
+    if (status && status >= 400 && !isAuthEndpoint(requestUrl) && !silent) {
+      toast.error(extractErrorMessage(error));
+    }
+    return Promise.reject(error);
+  },
+);
+
+// ─── Helpers ──────────────────────────────────────────────────────────
+
+export function extractErrorMessage(error: unknown, fallback = 'İşlem başarısız'): string {
+  const axiosError = error as AxiosError<BackendErrorPayload>;
+  const payload = axiosError.response?.data;
+  const detail = payload?.data?.detail;
+  if (detail) {
+    const parts = Object.entries(detail).map(([key, value]) => `${key}: ${value}`);
+    if (parts.length > 0) return parts.join(' · ');
+  }
+  return payload?.data?.message ?? payload?.errorMessage ?? axiosError.message ?? fallback;
+}
+
+export async function unwrap<T>(promise: Promise<{ data: BaseResponse<T> }>): Promise<T> {
+  const { data } = await promise;
+  return data.data;
+}
