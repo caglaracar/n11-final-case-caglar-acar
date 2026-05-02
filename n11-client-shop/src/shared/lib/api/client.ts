@@ -9,9 +9,9 @@ import { toast } from 'sonner';
 import { useAuthStore, getAccessToken, getRefreshToken } from '@/features/auth/store';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 if (!BASE_URL) {
-  throw new Error('NEXT_PUBLIC_API_BASE_URL is not set. Copy .env.example to .env.local.');
+  throw new Error('NEXT_PUBLIC_API_URL is not set. Copy .env.example to .env.local.');
 }
 
 // ─── Types ────────────────────────────────────────────────────────────
