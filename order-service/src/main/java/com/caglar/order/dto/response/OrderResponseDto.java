@@ -1,21 +1,20 @@
 package com.caglar.order.dto.response;
 
-import lombok.Builder;
+import com.caglar.order.enums.OrderStatus;
 
-import java.time.Instant;
 import java.util.List;
 
-@Builder
 public record OrderResponseDto(
         Long id,
         Long authId,
-        String status,
+        String customerEmail,
+        String customerName,
         Double totalAmount,
         String currency,
-        List<Item> items,
-        Instant createdAt,
-        Instant updatedAt
-) {
-    @Builder
-    public record Item(String productId, String productName, Integer quantity, Double unitPrice) {}
-}
+        OrderStatus status,
+        String shippingAddress,
+        String shippingCity,
+        List<OrderItemResponseDto> items,
+        Long createdAt,
+        Long updatedAt
+) {}

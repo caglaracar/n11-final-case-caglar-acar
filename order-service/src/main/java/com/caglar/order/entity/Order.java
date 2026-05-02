@@ -1,10 +1,16 @@
 package com.caglar.order.entity;
 
 import com.caglar.common.entity.BaseEntity;
-import com.caglar.common.exception.BusinessException;
-import com.caglar.common.exception.ErrorType;
 import com.caglar.order.enums.OrderStatus;
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,52 +20,50 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "tbl_order", indexes = @Index(name = "ix_order_auth_id", columnList = "auth_id"))
 @Getter
 @Setter
+@Entity
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "orders", indexes = {
+        @Index(name = "idx_orders_auth", columnList = "auth_id"),
+        @Index(name = "idx_orders_status", columnList = "status")
+})
 public class Order extends BaseEntity {
 
     @Column(name = "auth_id", nullable = false)
     private Long authId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 24)
-    @Builder.Default
-    private OrderStatus status = OrderStatus.CREATED;
+    @Column(name = "customer_email", length = 128)
+    private String customerEmail;
 
-    @Column(nullable = false)
+    @Column(name = "customer_name", length = 128)
+    private String customerName;
+
+    @Column(name = "total_amount", nullable = false)
     private Double totalAmount;
 
-    @Column(nullable = false, length = 8)
-    @Builder.Default
-    private String currency = "TRY";
+    @Column(name = "currency", nullable = false, length = 8)
+    private String currency;
 
-    /** Kargo bildirimi için kullanılır. Sipariş oluşturulurken frontend'den alınır. */
-    @Column(name = "user_email", length = 255)
-    private String userEmail;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 16)
+    private OrderStatus status;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    /** Kargo adresi snapshot'ı (adres user-service'te değişebilir). */
+    @Column(name = "shipping_address", length = 512)
+    private String shippingAddress;
+
+    @Column(name = "shipping_city", length = 64)
+    private String shippingCity;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
-    /** Yeni kalem ekler ve totali günceller. */
     public void addItem(OrderItem item) {
-        item.setOrder(this);
         items.add(item);
-        this.totalAmount = (this.totalAmount == null ? 0d : this.totalAmount)
-                + item.getQuantity() * item.getUnitPrice();
-    }
-
-    /** Status geçişini state-machine kurallarına göre uygular. */
-    public void transitionTo(OrderStatus next) {
-        if (!status.canTransitionTo(next)) {
-            throw new BusinessException(ErrorType.INVALID_ARGUMENT,
-                    "Geçersiz durum geçişi: " + status + " -> " + next);
-        }
-        this.status = next;
+        item.setOrder(this);
     }
 }
