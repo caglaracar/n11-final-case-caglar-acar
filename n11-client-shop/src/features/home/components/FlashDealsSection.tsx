@@ -20,6 +20,19 @@ function diffParts(ms: number) {
   };
 }
 
+function TimeUnit({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="min-w-[2.2rem] rounded-lg bg-white/20 px-2 py-1 text-center text-lg font-bold tabular-nums leading-none text-white backdrop-blur-sm">
+        {value}
+      </span>
+      <span className="mt-1 text-[10px] font-medium uppercase tracking-wider text-white/70">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export function FlashDealsSection() {
   const { data } = useQuery({
     queryKey: ['products', 'flash-deals'],
@@ -35,7 +48,7 @@ export function FlashDealsSection() {
 
   const earliestEnd = useMemo(() => {
     if (!data) return null;
-    const stamps = data
+    const stamps = (data as Array<{ flashDealEndsAt?: string | null }>)
       .map((p) => (p.flashDealEndsAt ? new Date(p.flashDealEndsAt).getTime() : NaN))
       .filter((n) => !Number.isNaN(n) && n > now);
     return stamps.length > 0 ? Math.min(...stamps) : null;
@@ -47,48 +60,40 @@ export function FlashDealsSection() {
 
   return (
     <section className="container py-10">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-sm">
-            <Zap className="h-5 w-5 fill-current" />
-          </span>
-          <div className="min-w-0">
-            <h2 className="flex items-center gap-2 truncate text-xl font-bold tracking-tight md:text-2xl">
-              Flash Fırsatlar
-              {time && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-orange-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-600 ring-1 ring-orange-200">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-500" />
-                  Bitiyor
-                </span>
-              )}
-            </h2>
+      <div className="mb-5 overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 via-rose-500 to-pink-500 p-5 shadow-lg">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/20 backdrop-blur-sm">
+              <Zap className="h-6 w-6 fill-white text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-extrabold tracking-tight text-white md:text-2xl">
+                Flash Fırsatlar
+              </h2>
+              <p className="text-sm font-medium text-white/80">
+                Sınırlı süre, sınırlı stok
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
             {time && (
-              <div className="mt-1 flex items-center gap-1">
-                {[
-                  { label: 'sa', v: pad(time.h) },
-                  { label: 'dk', v: pad(time.m) },
-                  { label: 'sn', v: pad(time.s) },
-                ].map((u, i) => (
-                  <span key={u.label} className="flex items-center gap-1">
-                    <span className="rounded-md bg-ink-700 px-2 py-0.5 text-sm font-bold tabular-nums text-white shadow-sm">
-                      {u.v}
-                    </span>
-                    <span className="text-[10px] font-semibold uppercase text-muted-foreground">
-                      {u.label}
-                    </span>
-                    {i < 2 && <span className="px-0.5 text-sm font-bold text-ink-400">:</span>}
-                  </span>
-                ))}
+              <div className="flex items-end gap-2">
+                <TimeUnit value={pad(time.h)} label="saat" />
+                <span className="mb-4 text-lg font-bold text-white/60">:</span>
+                <TimeUnit value={pad(time.m)} label="dakika" />
+                <span className="mb-4 text-lg font-bold text-white/60">:</span>
+                <TimeUnit value={pad(time.s)} label="saniye" />
               </div>
             )}
+            <Link
+              href="/products?deals=1"
+              className="shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-bold text-orange-600 shadow-sm transition-opacity hover:opacity-90"
+            >
+              Tümünü gör →
+            </Link>
           </div>
         </div>
-        <Link
-          href="/products?deals=1"
-          className="shrink-0 whitespace-nowrap text-sm font-semibold text-brand-600 transition-colors hover:text-brand-700"
-        >
-          Tümünü gör →
-        </Link>
       </div>
 
       <HorizontalScroller>
