@@ -4,18 +4,29 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Document(collection = "baskets")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class Basket {
+
+    @Id
+    private String id;
+
+    @Indexed(unique = true)
     private Long authId;
+
     @Builder.Default
     private List<BasketItem> items = new ArrayList<>();
+
     private Long updatedAt;
 
     public Double total() {
