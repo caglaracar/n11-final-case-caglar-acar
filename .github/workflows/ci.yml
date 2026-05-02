@@ -130,14 +130,21 @@ jobs:
             product-service) MONGO_SECRET=MONGODB_URI_PRODUCT ;;
             *)               MONGO_SECRET=MONGODB_URI ;;
           esac
+          EXTRA_ENV_VARS=""
+          EXTRA_SECRETS=""
+          if [ "${{ matrix.service }}" = "payment-service" ]; then
+            SVC_URL=$(gcloud run services describe ${{ matrix.service }}-staging --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo "")
+            EXTRA_ENV_VARS=",IYZICO_CALLBACK_URL=${SVC_URL}/dev/v1/payment/iyzico/callback,IYZICO_SUCCESS_REDIRECT=https://sepetify-shop.vercel.app/orders/{orderId}/result,IYZICO_FAILURE_REDIRECT=https://sepetify-shop.vercel.app/orders/{orderId}/result,IYZICO_BASE_URL=https://sandbox-api.iyzipay.com"
+            EXTRA_SECRETS=",IYZICO_API_KEY=IYZICO_API_KEY:latest,IYZICO_SECRET_KEY=IYZICO_SECRET_KEY:latest"
+          fi
           gcloud run deploy ${{ matrix.service }}-staging \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
             --add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres \
-            --set-env-vars="SPRING_PROFILES_ACTIVE=staging,SERVER_PORT=8080" \
-            --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest" \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=staging,SERVER_PORT=8080${EXTRA_ENV_VARS}" \
+            --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest${EXTRA_SECRETS}" \
             --vpc-egress=private-ranges-only \
             --memory=1Gi \
             --cpu=1 \
@@ -204,14 +211,21 @@ jobs:
             product-service) MONGO_SECRET=MONGODB_URI_PRODUCT ;;
             *)               MONGO_SECRET=MONGODB_URI ;;
           esac
+          EXTRA_ENV_VARS=""
+          EXTRA_SECRETS=""
+          if [ "${{ matrix.service }}" = "payment-service" ]; then
+            SVC_URL=$(gcloud run services describe ${{ matrix.service }} --region=${{ env.REGION }} --format='value(status.url)' 2>/dev/null || echo "")
+            EXTRA_ENV_VARS=",IYZICO_CALLBACK_URL=${SVC_URL}/dev/v1/payment/iyzico/callback,IYZICO_SUCCESS_REDIRECT=https://sepetify-shop.vercel.app/orders/{orderId}/result,IYZICO_FAILURE_REDIRECT=https://sepetify-shop.vercel.app/orders/{orderId}/result,IYZICO_BASE_URL=https://sandbox-api.iyzipay.com"
+            EXTRA_SECRETS=",IYZICO_API_KEY=IYZICO_API_KEY:latest,IYZICO_SECRET_KEY=IYZICO_SECRET_KEY:latest"
+          fi
           gcloud run deploy ${{ matrix.service }} \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
             --add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres \
-            --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SERVER_PORT=8080" \
-            --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest" \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SERVER_PORT=8080${EXTRA_ENV_VARS}" \
+            --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest${EXTRA_SECRETS}" \
             --vpc-egress=private-ranges-only \
             --memory=1Gi \
             --cpu=1 \
