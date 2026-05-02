@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// build: 2
 const nextConfig = {
   reactStrictMode: false,
   images: { remotePatterns: [{ protocol: 'https', hostname: '**' }] },
