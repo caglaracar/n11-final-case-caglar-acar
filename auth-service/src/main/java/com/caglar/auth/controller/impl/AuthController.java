@@ -65,7 +65,6 @@ public class AuthController extends BaseController implements IAuthApi {
         return ok();
     }
 
-    /** Internal — service-to-service: user-service profil oluştururken kullanır. Gateway'de JWT kontrolü olduğu için dış erişim de korumalıdır. */
     @GetMapping("/internal/{authId}")
     public ResponseEntity<BaseResponse<AuthInfoResponseDto>> getByAuthId(@PathVariable Long authId) {
         return ok(authService.getByAuthId(authId));

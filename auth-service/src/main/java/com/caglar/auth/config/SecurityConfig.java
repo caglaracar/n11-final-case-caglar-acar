@@ -9,10 +9,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * Auth-service stateless'tir; kayıt/login endpoint'leri public.
- * Gerçek JWT validation gateway tarafında yapılır.
- */
 @Configuration
 public class SecurityConfig {
 

@@ -6,11 +6,6 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
-/**
- * Admin kayıt isteği. Normal register'dan farkı:
- *  - `inviteCode` zorunlu (sunucu tarafındaki secret ile eşleşmeli).
- *  - Sonuçta oluşturulan Auth `Role.ADMIN` olur.
- */
 @Builder
 public record RegisterAdminRequestDto(
 

@@ -6,11 +6,6 @@ import com.caglar.common.exception.ErrorType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/**
- * Auth flow için stateless input validation kuralları.
- * Repository'ye dokunan kontroller {@link com.caglar.auth.helper.AuthHelper}'da kalır;
- * burada yalnızca input-vs-input kuralları (eşitlik, davet kodu vb.) bulunur.
- */
 @Component
 @RequiredArgsConstructor
 public class AuthValidator {

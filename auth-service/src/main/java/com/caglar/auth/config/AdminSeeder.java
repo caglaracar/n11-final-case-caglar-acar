@@ -10,10 +10,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-/**
- * Boot up sırasında admin yoksa application.yml'deki credentials ile bir admin oluşturur.
- * Kurumsal e-ticaret modunda kategori/ürün ekleme ADMIN rolü gerektirdiği için en az bir admin lazım.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
