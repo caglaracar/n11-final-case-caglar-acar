@@ -273,14 +273,12 @@ frontend/
 
 Kullanıcının "ek değerlendirme kriteri" notu için aday özellikler:
 
-1. **review-service** (Mongo) — Ürün yorum + puan
-2. **coupon-service** — Kupon/indirim kodları
-3. **SSE / WebSocket** — Sipariş status real-time güncelleme
-4. **Wishlist** (Redis set)
-5. **Recommendation** — Mongo aggregation co-occurrence ("bunu alanlar şunu da aldı")
-6. **Admin Dashboard** — Next.js ayrı route group
-7. **Prometheus + Grafana** — Cloud Monitoring yanında self-hosted
-8. **ELK / Loki** — Log aggregation Cloud Logging yanında
+1. **coupon-service** — Kupon/indirim kodları
+2. **SSE / WebSocket** — Sipariş status real-time güncelleme
+3. **Recommendation** — Mongo aggregation co-occurrence ("bunu alanlar şunu da aldı")
+4. **Admin Dashboard** — Next.js ayrı route group
+5. **Prometheus + Grafana** — Cloud Monitoring yanında self-hosted
+6. **ELK / Loki** — Log aggregation Cloud Logging yanında
 
 ---
 

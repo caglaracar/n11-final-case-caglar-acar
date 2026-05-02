@@ -184,11 +184,10 @@ services:
     ports:
       - "9093:9093"
     environment:
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
+      MONGODB_URI: mongodb://mongo:27017/BasketDB
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
     depends_on:
-      - redis
+      - mongo
       - discovery-service
 
   order-service:
@@ -230,6 +229,12 @@ services:
       POSTGRES_PASSWORD: root
       SPRING_KAFKA_BOOTSTRAPSERVERS: kafka:9092
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      IYZICO_API_KEY: ${IYZICO_API_KEY:-sandbox-6WzXl3t6CTSwQlQ5WWmvom7N64Wjo1tR}
+      IYZICO_SECRET_KEY: ${IYZICO_SECRET_KEY:-sandbox-DbJPjQdBHRHTd3rpUCnAPqfzBcP6LeAh}
+      IYZICO_BASE_URL: ${IYZICO_BASE_URL:-https://sandbox-api.iyzipay.com}
+      IYZICO_CALLBACK_URL: ${IYZICO_CALLBACK_URL:-http://localhost:9095/dev/v1/payment/iyzico/callback}
+      IYZICO_SUCCESS_REDIRECT: ${IYZICO_SUCCESS_REDIRECT:-http://localhost:3000/orders/{orderId}/result}
+      IYZICO_FAILURE_REDIRECT: ${IYZICO_FAILURE_REDIRECT:-http://localhost:3000/orders/{orderId}/result}
     depends_on:
       - postgres
       - kafka
