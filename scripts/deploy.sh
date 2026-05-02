@@ -84,6 +84,7 @@ for svc in "${SERVICES[@]}"; do
       --allow-unauthenticated \
       --set-env-vars="SPRING_PROFILES_ACTIVE=${ENV},SERVER_PORT=8080,AUTH_SERVICE_URL=${AUTH_URL},USER_SERVICE_URL=${USER_URL},PRODUCT_SERVICE_URL=${PRODUCT_URL},BASKET_SERVICE_URL=${BASKET_URL},ORDER_SERVICE_URL=${ORDER_URL},PAYMENT_SERVICE_URL=${PAYMENT_URL},NOTIFICATION_SERVICE_URL=${NOTIFICATION_URL}" \
       --set-secrets="JWT_SECRET=JWT_SECRET:latest,REDIS_HOST=REDIS_HOST:latest" \
+      --vpc-egress=private-ranges-only \
       --memory=512Mi --cpu=1
   else
     gcloud run deploy "${svc}${SUFFIX}" \
@@ -93,6 +94,7 @@ for svc in "${SERVICES[@]}"; do
       --add-cloudsql-instances="$CLOUDSQL" \
       --set-env-vars="SPRING_PROFILES_ACTIVE=${ENV},SERVER_PORT=8080" \
       --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=MONGODB_URI:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest" \
+      --vpc-egress=private-ranges-only \
       --memory=1Gi --cpu=1 --timeout=300 --cpu-boost
   fi
 done
