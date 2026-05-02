@@ -15,7 +15,7 @@ import { useAuthStore } from '@/features/auth/store';
 /**
  * Login flow: tokens'ı al → store'a yaz → /me ile profili çek → user'ı set et → yönlendir.
  */
-export function useLogin(redirectTo = '/account') {
+export function useLogin(redirectTo = '/') {
   const router = useRouter();
   const setTokens = useAuthStore((s) => s.setTokens);
   const setUser = useAuthStore((s) => s.setUser);
@@ -38,7 +38,7 @@ export function useLogin(redirectTo = '/account') {
 /**
  * Register flow: kayıt ol → otomatik giriş yap → /me → yönlendir.
  */
-export function useRegister(redirectTo = '/account') {
+export function useRegister(redirectTo = '/') {
   const router = useRouter();
   const setTokens = useAuthStore((s) => s.setTokens);
   const setUser = useAuthStore((s) => s.setUser);
