@@ -20,6 +20,7 @@ public class OrderEventPublisher {
 
     public void publishOrderPlaced(OrderPlacedEvent event) {
         send(KafkaTopics.ORDER_PLACED, String.valueOf(event.orderId()), event);
+        send(KafkaTopics.ORDER_EVENTS, String.valueOf(event.orderId()), event);
     }
 
     public void publishConfirmationEmail(String to, Long orderId, Double total, String currency) {

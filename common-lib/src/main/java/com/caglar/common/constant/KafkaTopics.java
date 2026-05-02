@@ -13,4 +13,8 @@ public final class KafkaTopics {
     public static final String NOTIFICATION_EMAIL = "notification.email";
 
     public static final String NOTIFICATION_SLACK = "notification.slack";
+
+    public static final String ORDER_EVENTS = "order-events";
+
+    public static final String NOTIFICATION_EVENTS = "notification-events";
 }
