@@ -1,15 +1,18 @@
 package com.caglar.payment.service;
 
-import com.caglar.common.event.OrderCreatedEvent;
-import com.caglar.payment.dto.request.CheckoutRequestDto;
+import com.caglar.payment.dto.request.InitCheckoutRequestDto;
+import com.caglar.payment.dto.response.InitCheckoutResponseDto;
 import com.caglar.payment.dto.response.PaymentResponseDto;
-import com.caglar.payment.entity.Payment;
+import org.springframework.http.ResponseEntity;
 
 public interface PaymentService {
 
-    /** Saga consumer tetikler (mock auto-payment). */
-    Payment processOrder(OrderCreatedEvent event);
+    /** order-service Feign çağrısı: iyzico checkout init + DB insert. */
+    InitCheckoutResponseDto initiate(InitCheckoutRequestDto dto);
 
-    /** Frontend'den direkt kart ile çağrılır — İyzico veya mock için. */
-    PaymentResponseDto checkout(Long authId, CheckoutRequestDto dto);
+    /** İyzico callback: token doğrula → DB güncelle → Kafka publish → 302 redirect. */
+    ResponseEntity<Void> handleCallback(String token);
+
+    /** Sipariş için en son ödeme kaydı (frontend result page için). */
+    PaymentResponseDto getByOrderId(Long orderId);
 }

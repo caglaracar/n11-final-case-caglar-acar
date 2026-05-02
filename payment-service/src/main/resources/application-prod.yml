@@ -40,3 +40,11 @@ eureka:
     enabled: false
     register-with-eureka: false
     fetch-registry: false
+
+iyzico:
+  api-key:          ${IYZICO_API_KEY}
+  secret-key:       ${IYZICO_SECRET_KEY}
+  base-url:         ${IYZICO_BASE_URL:https://sandbox-api.iyzipay.com}
+  callback-url:     ${IYZICO_CALLBACK_URL}
+  success-redirect: ${IYZICO_SUCCESS_REDIRECT}
+  failure-redirect: ${IYZICO_FAILURE_REDIRECT}

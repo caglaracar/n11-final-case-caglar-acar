@@ -6,5 +6,8 @@ import com.caglar.payment.entity.Payment;
 import java.util.Optional;
 
 public interface PaymentRepository extends BaseRepository<Payment, Long> {
-    Optional<Payment> findByOrderId(Long orderId);
+
+    Optional<Payment> findByIyzicoToken(String iyzicoToken);
+
+    Optional<Payment> findFirstByOrderIdOrderByIdDesc(Long orderId);
 }
