@@ -5,6 +5,31 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Hangi servis deploy edilsin?'
+        required: true
+        type: choice
+        options:
+          - all
+          - auth-service
+          - user-service
+          - product-service
+          - basket-service
+          - order-service
+          - payment-service
+          - notification-service
+          - gateway-service
+        default: 'all'
+      environment:
+        description: 'Ortam'
+        required: true
+        type: choice
+        options:
+          - staging
+          - prod
+        default: 'staging'
 
 permissions:
   contents: read
@@ -20,11 +45,12 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      services: ${{ steps.filter.outputs.changes }}
+      services: ${{ steps.compute.outputs.services }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
+        if: github.event_name != 'workflow_dispatch'
         with:
           filters: |
             auth-service: ['auth-service/**', 'common-lib/**']
@@ -36,6 +62,17 @@ jobs:
             notification-service: ['notification-service/**', 'common-lib/**']
             gateway-service: ['gateway-service/**', 'common-lib/**']
             discovery-service: ['discovery-service/**', 'common-lib/**']
+      - id: compute
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.service }}" = "all" ]; then
+              echo 'services=["auth-service","user-service","product-service","basket-service","order-service","payment-service","notification-service","gateway-service"]' >> $GITHUB_OUTPUT
+            else
+              echo 'services=["${{ inputs.service }}"]' >> $GITHUB_OUTPUT
+            fi
+          else
+            echo 'services=${{ steps.filter.outputs.changes }}' >> $GITHUB_OUTPUT
+          fi
 
   build-test:
     needs: detect-changes
@@ -74,7 +111,7 @@ jobs:
 
   deploy-staging:
     needs: [ detect-changes, build-test ]
-    if: github.ref == 'refs/heads/develop' && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != ''
+    if: (github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging')) && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != ''
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -111,7 +148,7 @@ jobs:
 
   deploy-staging-gateway:
     needs: [ detect-changes, deploy-staging ]
-    if: github.ref == 'refs/heads/develop' && contains(needs.detect-changes.outputs.services, 'gateway-service')
+    if: (github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging')) && contains(needs.detect-changes.outputs.services, 'gateway-service')
     runs-on: ubuntu-latest
     steps:
       - uses: google-github-actions/auth@v2
@@ -141,7 +178,7 @@ jobs:
 
   deploy-prod:
     needs: [ detect-changes, build-test ]
-    if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != ''
+    if: (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'prod')) && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != ''
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -178,7 +215,7 @@ jobs:
 
   deploy-prod-gateway:
     needs: [ detect-changes, deploy-prod ]
-    if: github.ref == 'refs/heads/main' && contains(needs.detect-changes.outputs.services, 'gateway-service')
+    if: (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'prod')) && contains(needs.detect-changes.outputs.services, 'gateway-service')
     runs-on: ubuntu-latest
     steps:
       - uses: google-github-actions/auth@v2
