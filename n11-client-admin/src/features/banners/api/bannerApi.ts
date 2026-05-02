@@ -1,6 +1,6 @@
 import { api, unwrap, type BaseResponse } from '@/shared/lib/api/client';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
-import type { Banner, BannerPayload } from '@/features/banners/types';
+import type { Banner, BannerPayload } from '@/features/banners/types/banners-types';
 
 export const bannerApi = {
   findAll: () =>

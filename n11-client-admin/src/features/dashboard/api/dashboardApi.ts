@@ -1,4 +1,4 @@
-import type { Order, OrderStatus } from '@/features/orders/types';
+import type { Order, OrderStatus } from '@/features/orders/types/orders-types';
 import { api, unwrap, type BaseResponse } from '@/shared/lib/api/client';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
 

@@ -1,6 +1,6 @@
 import { api, unwrap, type BaseResponse } from '@/shared/lib/api/client';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
-import type { Category, CategoryPayload } from '@/features/categories/types';
+import type { Category, CategoryPayload } from '@/features/categories/types/categories-types';
 
 export const categoryApi = {
   findAll: () =>

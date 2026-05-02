@@ -1,6 +1,6 @@
 import { api, unwrap, type BaseResponse, type Page } from '@/shared/lib/api/client';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
-import type { UserProfile } from '@/features/users/types';
+import type { UserProfile } from '@/features/users/types/users-types';
 
 export interface UserSearchParams {
   page?: number;

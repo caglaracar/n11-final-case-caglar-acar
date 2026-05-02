@@ -19,7 +19,7 @@ import { ConfirmDialog } from '@/shared/components/ConfirmDialog';
 import { DataTable, type DataTableColumn } from '@/shared/components/data-table/DataTable';
 import { SearchInput } from '@/shared/components/data-table/SearchInput';
 import { productApi } from '@/features/products/api/productApi';
-import type { Product } from '@/features/products/types';
+import type { Product } from '@/features/products/types/products-types';
 import { formatCurrency, formatDate } from '@/shared/lib/utils';
 
 type Filter = 'all' | 'discounted' | 'plain';

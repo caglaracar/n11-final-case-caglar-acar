@@ -6,7 +6,7 @@ import type {
   ProductCreatePayload,
   ProductUpdatePayload,
   SetFlashDealPayload,
-} from '@/features/products/types';
+} from '@/features/products/types/products-types';
 
 export interface ProductListParams {
   page?: number;
