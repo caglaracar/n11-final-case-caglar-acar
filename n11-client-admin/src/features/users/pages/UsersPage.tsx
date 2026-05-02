@@ -6,7 +6,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { DataTable, type DataTableColumn } from '@/shared/components/data-table/DataTable';
 import { SearchInput } from '@/shared/components/data-table/SearchInput';
 import { userApi } from '@/features/users/api/userApi';
-import type { UserProfile } from '@/features/users/types';
+import type { UserProfile } from '@/features/users/types/users-types';
 import { formatDate } from '@/shared/lib/utils';
 
 export function UsersPage() {

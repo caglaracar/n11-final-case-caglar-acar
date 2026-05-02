@@ -1,6 +1,6 @@
 import { api, unwrap, type BaseResponse, type Page } from '@/shared/lib/api/client';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
-import type { Order, OrderStatus } from '@/features/orders/types';
+import type { Order, OrderStatus } from '@/features/orders/types/orders-types';
 
 export interface OrderListParams {
   page?: number;

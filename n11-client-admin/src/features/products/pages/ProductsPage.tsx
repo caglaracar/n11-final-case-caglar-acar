@@ -16,7 +16,7 @@ import { FormDialog } from '@/shared/components/FormDialog';
 import { Field } from '@/shared/components/Field';
 import { productApi } from '@/features/products/api/productApi';
 import { categoryApi } from '@/features/categories/api/categoryApi';
-import type { Product } from '@/features/products/types';
+import type { Product } from '@/features/products/types/products-types';
 import { formatCurrency } from '@/shared/lib/utils';
 
 const schema = z.object({

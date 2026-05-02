@@ -6,7 +6,7 @@ import { Card } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { DataTable, type DataTableColumn } from '@/shared/components/data-table/DataTable';
 import { orderApi } from '@/features/orders/api/orderApi';
-import { ORDER_STATUSES, type Order, type OrderStatus } from '@/features/orders/types';
+import { ORDER_STATUSES, type Order, type OrderStatus } from '@/features/orders/types/orders-types';
 import { formatCurrency, formatDate } from '@/shared/lib/utils';
 
 const KEY = ['admin', 'orders'] as const;

@@ -8,7 +8,7 @@ import { Card } from '@/shared/components/ui/card';
 import { useCartStore } from '@/features/cart/store';
 import { formatCurrency } from '@/shared/lib/utils';
 import { toast } from 'sonner';
-import type { Product } from '@/features/products/types';
+import type { Product } from '@/features/products/types/products-types';
 
 export function ProductCard({ product }: { product: Product }) {
   const add = useCartStore((s) => s.add);
@@ -16,9 +16,9 @@ export function ProductCard({ product }: { product: Product }) {
     ? Math.round((1 - product.price / product.oldPrice) * 100)
     : 0;
 
-  const handleAdd = () => {
-    add({ productId: product.id, name: product.name, price: product.price, thumbnail: product.thumbnail });
-    toast.success('Sepete eklendi');
+  const handleAdd = async () => {
+    const ok = await add({ productId: product.id, name: product.name, price: product.price, thumbnail: product.thumbnail });
+    if (ok) toast.success('Sepete eklendi');
   };
 
   return (

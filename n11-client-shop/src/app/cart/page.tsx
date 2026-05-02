@@ -20,8 +20,8 @@ export default function CartPage() {
   const removeSaved = useCartStore((s) => s.removeSaved);
   const exceedsMaxAmount = total >= MAX_PAYMENT_AMOUNT;
 
-  const handleAutoSplit = () => {
-    const moved = autoSplit();
+  const handleAutoSplit = async () => {
+    const moved = await autoSplit();
     if (moved > 0) {
       toast.success(`${moved} adet ürün bir sonraki siparişe ayrıldı`);
     }

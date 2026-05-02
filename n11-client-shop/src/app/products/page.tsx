@@ -4,9 +4,9 @@ import { Suspense, useEffect, useMemo, useRef } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronDown, Filter, X } from 'lucide-react';
-import { productApi } from '@/features/products/api/productApi';
-import { categoryApi } from '@/features/categories/api/categoryApi';
-import { brandApi } from '@/features/brands/api/brandApi';
+import { searchProducts } from '@/features/products/api/productApi';
+import { getAllCategories } from '@/features/categories/api/categoryApi';
+import { getAllBrands } from '@/features/brands/api/brandApi';
 import { ProductCard } from '@/features/products/components/ProductCard';
 import { cn } from '@/shared/lib/utils';
 
@@ -29,13 +29,13 @@ function ProductsPageInner() {
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
-    queryFn: () => categoryApi.findAll().catch(() => []),
+    queryFn: () => getAllCategories().catch(() => []),
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: brands = [] } = useQuery({
     queryKey: ['brands'],
-    queryFn: () => brandApi.findAll().catch(() => []),
+    queryFn: () => getAllBrands().catch(() => []),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -78,7 +78,7 @@ function ProductsPageInner() {
     enabled: filtersReady,
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
-      productApi.list({
+      searchProducts({
         q,
         categoryId,
         brandId,

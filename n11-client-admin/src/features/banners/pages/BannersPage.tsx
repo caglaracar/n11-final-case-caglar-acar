@@ -13,7 +13,7 @@ import { DataTable, type DataTableColumn } from '@/shared/components/data-table/
 import { FormDialog } from '@/shared/components/FormDialog';
 import { Field } from '@/shared/components/Field';
 import { bannerApi } from '@/features/banners/api/bannerApi';
-import type { Banner } from '@/features/banners/types';
+import type { Banner } from '@/features/banners/types/banners-types';
 
 const schema = z.object({
   title: z.string().min(2),

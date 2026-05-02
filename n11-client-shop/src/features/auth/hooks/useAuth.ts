@@ -3,7 +3,13 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { authApi, type LoginPayload, type RegisterPayload } from '@/features/auth/api/authApi';
+import {
+  getCurrentUser,
+  loginUser,
+  logoutUser,
+  registerUser,
+} from '@/features/auth/api/authApi';
+import type { LoginPayload, RegisterPayload } from '@/features/auth/types/auth-types';
 import { useAuthStore } from '@/features/auth/store';
 
 /**
@@ -16,9 +22,9 @@ export function useLogin(redirectTo = '/account') {
 
   return useMutation({
     mutationFn: async (payload: LoginPayload) => {
-      const tokens = await authApi.login(payload);
+      const tokens = await loginUser(payload);
       setTokens(tokens); // /me çağrısı bu token'ı kullanacak
-      const user = await authApi.me();
+      const user = await getCurrentUser();
       setUser(user);
       return user;
     },
@@ -39,10 +45,10 @@ export function useRegister(redirectTo = '/account') {
 
   return useMutation({
     mutationFn: async (payload: RegisterPayload) => {
-      await authApi.register(payload);
-      const tokens = await authApi.login({ userName: payload.userName, password: payload.password });
+      await registerUser(payload);
+      const tokens = await loginUser({ userName: payload.userName, password: payload.password });
       setTokens(tokens);
-      const user = await authApi.me();
+      const user = await getCurrentUser();
       setUser(user);
       return user;
     },
@@ -62,7 +68,7 @@ export function useLogout() {
     mutationFn: async () => {
       if (tokens?.refreshToken) {
         // Backend hatası UX'i bozmamalı: yine de local clear ediyoruz
-        await authApi.logout(tokens.refreshToken).catch(() => undefined);
+        await logoutUser(tokens.refreshToken).catch(() => undefined);
       }
     },
     onSettled: () => {

@@ -1,83 +1,53 @@
 import { api, unwrap, type BaseResponse } from '@/shared/lib/api/client';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
-import type { AuthTokens, AuthUser } from '@/features/auth/store';
+import type {
+  AuthTokens,
+  AuthUser,
+  LoginPayload,
+  RegisterPayload,
+  RegisterResponse,
+  TokenResponse,
+  UserProfileResponse,
+} from '@/features/auth/types/auth-types';
 
-// ── Auth-service contracts (mirror backend DTOs) ──────────────────
-export interface LoginPayload {
-  userName: string;
-  password: string;
+function tokenResponseToTokens(tokenResponse: TokenResponse): AuthTokens {
+  return {
+    accessToken: tokenResponse.accessToken,
+    refreshToken: tokenResponse.refreshToken,
+    expiresIn: tokenResponse.expiresIn,
+  };
 }
 
-export interface RegisterPayload {
-  userName: string;
-  email: string;
-  password: string;
-  repassword: string;
+function profileResponseToUser(profile: UserProfileResponse): AuthUser {
+  return {
+    id: profile.id,
+    authId: profile.authId,
+    userName: profile.userName,
+    email: profile.email,
+    role: profile.role,
+    name: profile.name,
+    surName: profile.surName,
+    phone: profile.phone,
+    avatar: profile.avatar,
+  };
 }
 
-export interface RegisterResponse {
-  authId: number;
-  userName: string;
-  email: string;
-  role: string;
+export async function registerUser(payload: RegisterPayload): Promise<RegisterResponse> {
+  return unwrap(api.post<BaseResponse<RegisterResponse>>(ENDPOINTS.auth.register, payload));
 }
 
-export interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-  tokenType: string;
+export async function loginUser(payload: LoginPayload): Promise<AuthTokens> {
+  const tokenResponse = await unwrap(
+    api.post<BaseResponse<TokenResponse>>(ENDPOINTS.auth.login, payload),
+  );
+  return tokenResponseToTokens(tokenResponse);
 }
 
-// ── User-service profile ──────────────────────────────────────────
-export interface UserProfileResponse {
-  id: string;
-  authId: number;
-  userName: string;
-  name?: string;
-  surName?: string;
-  email: string;
-  phone?: string;
-  avatar?: string;
-  role: string;
-  createdAt?: string;
-  updatedAt?: string;
+export async function getCurrentUser(): Promise<AuthUser> {
+  const profile = await unwrap(api.get<BaseResponse<UserProfileResponse>>(ENDPOINTS.user.me));
+  return profileResponseToUser(profile);
 }
 
-const toTokens = (t: TokenResponse): AuthTokens => ({
-  accessToken: t.accessToken,
-  refreshToken: t.refreshToken,
-  expiresIn: t.expiresIn,
-});
-
-const toUser = (p: UserProfileResponse): AuthUser => ({
-  id: p.id,
-  authId: p.authId,
-  userName: p.userName,
-  email: p.email,
-  role: p.role,
-  name: p.name,
-  surName: p.surName,
-  phone: p.phone,
-  avatar: p.avatar,
-});
-
-export const authApi = {
-  register: (p: RegisterPayload) =>
-    unwrap<RegisterResponse>(api.post<BaseResponse<RegisterResponse>>(ENDPOINTS.auth.register, p)),
-
-  login: async (p: LoginPayload): Promise<AuthTokens> => {
-    const tr = await unwrap<TokenResponse>(api.post<BaseResponse<TokenResponse>>(ENDPOINTS.auth.login, p));
-    return toTokens(tr);
-  },
-
-  me: async (): Promise<AuthUser> => {
-    const profile = await unwrap<UserProfileResponse>(
-      api.get<BaseResponse<UserProfileResponse>>(ENDPOINTS.user.me),
-    );
-    return toUser(profile);
-  },
-
-  logout: (refreshToken: string) =>
-    unwrap<void>(api.post<BaseResponse<void>>(ENDPOINTS.auth.logout, { refreshToken })),
-};
+export async function logoutUser(refreshToken: string): Promise<void> {
+  await unwrap(api.post<BaseResponse<void>>(ENDPOINTS.auth.logout, { refreshToken }));
+}

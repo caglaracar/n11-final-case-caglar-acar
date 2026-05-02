@@ -1,79 +1,28 @@
 import { api, unwrap, type BaseResponse } from '@/shared/lib/api/client';
 import { ENDPOINTS } from '@/shared/lib/api/endpoints';
-import type { CartLine } from '@/features/cart/store';
+import type {
+  AddBasketItemPayload,
+  RawBasket,
+} from '@/features/cart/types/cart-types';
 
-// ─── Types ────────────────────────────────────────────────────────────
-
-export interface RawBasketItem {
-  productId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
+export async function getMyBasket(): Promise<RawBasket> {
+  return unwrap(api.get<BaseResponse<RawBasket>>(ENDPOINTS.basket.me));
 }
 
-export interface RawBasket {
-  authId: number;
-  items: RawBasketItem[] | null;
-  total: number;
-  updatedAt: number;
+export async function addBasketItem(payload: AddBasketItemPayload): Promise<RawBasket> {
+  return unwrap(api.post<BaseResponse<RawBasket>>(ENDPOINTS.basket.add, payload));
 }
 
-export interface AddBasketItemPayload {
-  productId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
+export async function updateBasketItem(productId: string, quantity: number): Promise<RawBasket> {
+  return unwrap(
+    api.put<BaseResponse<RawBasket>>(ENDPOINTS.basket.update, { productId, quantity }),
+  );
 }
 
-// ─── API çağrıları ────────────────────────────────────────────────────
-
-async function getMyBasket(): Promise<RawBasket> {
-  const request = api.get<BaseResponse<RawBasket>>(ENDPOINTS.basket.me);
-  return unwrap(request);
+export async function removeBasketItem(productId: string): Promise<RawBasket> {
+  return unwrap(api.delete<BaseResponse<RawBasket>>(ENDPOINTS.basket.remove(productId)));
 }
 
-async function addItem(item: AddBasketItemPayload): Promise<RawBasket> {
-  const request = api.post<BaseResponse<RawBasket>>(ENDPOINTS.basket.add, item);
-  return unwrap(request);
+export async function clearBasket(): Promise<void> {
+  await unwrap(api.delete<BaseResponse<void>>(ENDPOINTS.basket.clear));
 }
-
-async function updateItem(productId: string, quantity: number): Promise<RawBasket> {
-  const request = api.put<BaseResponse<RawBasket>>(ENDPOINTS.basket.update, { productId, quantity });
-  return unwrap(request);
-}
-
-async function removeItem(productId: string): Promise<RawBasket> {
-  const request = api.delete<BaseResponse<RawBasket>>(ENDPOINTS.basket.remove(productId));
-  return unwrap(request);
-}
-
-async function clearBasket(): Promise<void> {
-  const request = api.delete<BaseResponse<void>>(ENDPOINTS.basket.clear);
-  await unwrap(request);
-}
-
-/**
- * Local zustand sepetini backend basket-service ile senkron hale getirir.
- * Önce backend sepetini siler, sonra her satırı tek tek POST eder.
- * Checkout başlamadan hemen önce çağrılır.
- */
-async function syncFromLocal(lines: CartLine[]): Promise<void> {
-  await clearBasket();
-  for (const line of lines) {
-    await addItem({
-      productId: line.productId,
-      productName: line.name,
-      quantity: line.quantity,
-      unitPrice: line.price,
-    });
-  }
-}
-
-export const basketApi = {
-  me: getMyBasket,
-  add: addItem,
-  update: updateItem,
-  remove: removeItem,
-  clear: clearBasket,
-  syncFromLocal,
-};

@@ -7,7 +7,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { useCartStore } from '@/features/cart/store';
 import { formatCurrency } from '@/shared/lib/utils';
-import type { Product } from '@/features/products/types';
+import type { Product } from '@/features/products/types/products-types';
 
 interface Props {
   product: Product;
@@ -26,16 +26,16 @@ export function ProductMiniCard({ product, variant = 'deal' }: Props) {
       ? Math.round((1 - product.price / product.oldPrice) * 100)
       : 0;
 
-  const handleAdd = (event: React.MouseEvent) => {
+  const handleAdd = async (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    add({
+    const ok = await add({
       productId: product.id,
       name: product.name,
       price: product.price,
       thumbnail: product.thumbnail,
     });
-    toast.success('Sepete eklendi');
+    if (ok) toast.success('Sepete eklendi');
   };
 
   return (
