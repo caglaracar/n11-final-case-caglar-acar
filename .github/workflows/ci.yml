@@ -96,17 +96,17 @@ jobs:
         run: mvn -pl common-lib install -DskipTests
       - name: Test
         run: mvn -pl ${{ matrix.service }} -am test
-      - name: Build with Jib (main/develop only)
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+      - name: Build with Jib (develop only)
+        if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
         id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
       - name: Jib build & push
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
         run: |
           mvn -pl ${{ matrix.service }} -am compile -DskipTests
           mvn -pl ${{ matrix.service }} jib:build -DskipTests
@@ -210,7 +210,7 @@ jobs:
 
   deploy-prod:
     needs: [ detect-changes, build-test ]
-    if: (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'prod')) && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != ''
+    if: (github.event_name == 'workflow_dispatch' && inputs.environment == 'prod') && needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != ''
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -274,7 +274,7 @@ jobs:
 
   deploy-prod-gateway:
     needs: [ detect-changes, deploy-prod ]
-    if: (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.environment == 'prod')) && contains(needs.detect-changes.outputs.services, 'gateway-service')
+    if: (github.event_name == 'workflow_dispatch' && inputs.environment == 'prod') && contains(needs.detect-changes.outputs.services, 'gateway-service')
     runs-on: ubuntu-latest
     steps:
       - uses: google-github-actions/auth@v2
