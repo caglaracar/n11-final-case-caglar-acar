@@ -39,8 +39,6 @@ notification:
     from: ${MAIL_FROM:${MAIL_USERNAME:no-reply@n11-bootcamp.local}}
   slack:
     webhook-url: ${SLACK_WEBHOOK_URL:}
-  contact:
-    to: ${CONTACT_TO:admin@n11.local}
 
 management:
   endpoints:
