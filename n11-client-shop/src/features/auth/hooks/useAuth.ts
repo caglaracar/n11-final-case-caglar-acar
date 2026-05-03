@@ -11,6 +11,7 @@ import {
 } from '@/features/auth/api/authApi';
 import type { LoginPayload, RegisterPayload } from '@/features/auth/types/auth-types';
 import { useAuthStore } from '@/features/auth/store';
+import { extractErrorMessage } from '@/shared/lib/api/client';
 
 /**
  * Login flow: tokens'ı al → store'a yaz → /me ile profili çek → user'ı set et → yönlendir.
@@ -32,6 +33,7 @@ export function useLogin(redirectTo = '/') {
       toast.success(`Hoş geldin, ${user.userName}!`);
       router.push(redirectTo);
     },
+    onError: (err) => toast.error(extractErrorMessage(err, 'Giriş başarısız')),
   });
 }
 
@@ -56,6 +58,7 @@ export function useRegister(redirectTo = '/') {
       toast.success(`Hesabın oluşturuldu — hoş geldin, ${user.userName}!`);
       router.push(redirectTo);
     },
+    onError: (err) => toast.error(extractErrorMessage(err, 'Kayıt başarısız')),
   });
 }
 
