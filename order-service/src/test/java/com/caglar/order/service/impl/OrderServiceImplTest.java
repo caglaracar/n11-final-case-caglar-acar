@@ -1,7 +1,7 @@
 package com.caglar.order.service.impl;
 
 import com.caglar.common.dto.BaseResponse;
-import com.caglar.common.event.OrderPlacedEvent;
+
 import com.caglar.common.exception.BusinessException;
 import com.caglar.order.client.BasketClient;
 import com.caglar.order.client.NotificationClient;
@@ -17,7 +17,7 @@ import com.caglar.order.dto.response.CheckoutResponseDto;
 import com.caglar.order.dto.response.OrderResponseDto;
 import com.caglar.order.entity.Order;
 import com.caglar.order.enums.OrderStatus;
-import com.caglar.order.helper.OrderEventPublisher;
+
 import com.caglar.order.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +46,6 @@ class OrderServiceImplTest {
     @Mock UserClient userClient;
     @Mock ProductStockClient stockClient;
     @Mock PaymentClient paymentClient;
-    @Mock OrderEventPublisher eventPublisher;
     @Mock NotificationClient notificationClient;
 
     @InjectMocks OrderServiceImpl service;
@@ -202,9 +201,8 @@ class OrderServiceImplTest {
         service.onPaymentCompleted(5L);
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
-        then(basketClient).should().clear(AUTH_ID);                                  // sepet temizlenmeli
-        then(eventPublisher).should().publishOrderPlaced(any(OrderPlacedEvent.class)); // Kafka event
-        then(notificationClient).should().sendOrderConfirmed(any());                  // direkt bildirim
+        then(basketClient).should().clear(AUTH_ID);
+        then(notificationClient).should().sendOrderConfirmed(any());
     }
 
     @Test
@@ -215,7 +213,7 @@ class OrderServiceImplTest {
         service.onPaymentCompleted(5L); // ikinci kez tetiklense de bir şey yapmamalı
 
         then(basketClient).shouldHaveNoInteractions();
-        then(eventPublisher).shouldHaveNoInteractions();
+        then(notificationClient).shouldHaveNoInteractions();
     }
 
     @Test
