@@ -4,28 +4,24 @@ import com.caglar.common.exception.BusinessException;
 import com.caglar.stock.dto.request.StockOpRequestDto;
 import com.caglar.stock.dto.response.StockResponseDto;
 import com.caglar.stock.entity.Stock;
+import com.caglar.stock.repository.StockRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 class StockServiceImplTest {
 
-    @Mock MongoTemplate mongoTemplate;
+    @Mock StockRepository stockRepository;
 
     @InjectMocks StockServiceImpl service;
 
@@ -33,24 +29,18 @@ class StockServiceImplTest {
 
     @Test
     void reserve_decrementsStock_whenSufficient() {
-        Stock existing = stock("p1", 10);
-        given(mongoTemplate.findAndModify(any(Query.class), any(Update.class), eq(Stock.class)))
-                .willReturn(existing);
+        given(stockRepository.decrementIfSufficient("p1", 3)).willReturn(stock("p1", 10));
 
         service.reserve(opRequest(1L, "p1", 3));
 
-        then(mongoTemplate).should().findAndModify(any(Query.class), any(Update.class), eq(Stock.class));
+        then(stockRepository).should().decrementIfSufficient("p1", 3);
     }
 
     @Test
     void reserve_rollsBackAndThrows_whenStockInsufficient() {
-        // p1 başarılı, p2 kayıt var ama yetersiz → rollback + exception
-        Stock existing = stock("p1", 5);
-        given(mongoTemplate.findAndModify(any(Query.class), any(Update.class), eq(Stock.class)))
-                .willReturn(existing)  // p1 başarılı
-                .willReturn(null);     // p2 yetersiz
-        given(mongoTemplate.exists(any(Query.class), eq(Stock.class)))
-                .willReturn(true);     // p2 kaydı var ama stok yetersiz
+        given(stockRepository.decrementIfSufficient("p1", 2)).willReturn(stock("p1", 5));
+        given(stockRepository.decrementIfSufficient("p2", 1)).willReturn(null);
+        given(stockRepository.existsByProductId("p2")).willReturn(true);
 
         StockOpRequestDto req = new StockOpRequestDto(1L, List.of(
                 new StockOpRequestDto.Item("p1", 2),
@@ -64,11 +54,8 @@ class StockServiceImplTest {
 
     @Test
     void reserve_throwsImmediately_whenSingleItemInsufficient() {
-        // Kayıt var ama talep edilen miktar mevcut stoktan fazla
-        given(mongoTemplate.findAndModify(any(Query.class), any(Update.class), eq(Stock.class)))
-                .willReturn(null);
-        given(mongoTemplate.exists(any(Query.class), eq(Stock.class)))
-                .willReturn(true); // kayıt var, ama stok yetersiz
+        given(stockRepository.decrementIfSufficient("p1", 99)).willReturn(null);
+        given(stockRepository.existsByProductId("p1")).willReturn(true);
 
         assertThatThrownBy(() -> service.reserve(opRequest(1L, "p1", 99)))
                 .isInstanceOf(BusinessException.class)
@@ -77,13 +64,10 @@ class StockServiceImplTest {
 
     @Test
     void reserve_skipsItem_whenNoStockRecord() {
-        // Kayıt yoksa rezervasyon skip edilmeli, exception fırlatılmamalı
-        given(mongoTemplate.findAndModify(any(Query.class), any(Update.class), eq(Stock.class)))
-                .willReturn(null);
-        given(mongoTemplate.exists(any(Query.class), eq(Stock.class)))
-                .willReturn(false); // kayıt yok = takip edilmiyor
+        given(stockRepository.decrementIfSufficient("unknown", 5)).willReturn(null);
+        given(stockRepository.existsByProductId("unknown")).willReturn(false);
 
-        service.reserve(opRequest(1L, "unknown-product", 5)); // exception fırlatmamalı
+        service.reserve(opRequest(1L, "unknown", 5));
     }
 
     // ─── release ─────────────────────────────────────────────────
@@ -92,15 +76,14 @@ class StockServiceImplTest {
     void release_incrementsStockForEachItem() {
         service.release(opRequest(1L, "p1", 3));
 
-        then(mongoTemplate).should().updateFirst(any(Query.class), any(Update.class), eq(Stock.class));
+        then(stockRepository).should().increment("p1", 3);
     }
 
     // ─── getByProductId ──────────────────────────────────────────
 
     @Test
     void getByProductId_returnsQuantity_whenStockExists() {
-        given(mongoTemplate.findOne(any(Query.class), eq(Stock.class)))
-                .willReturn(stock("p1", 42));
+        given(stockRepository.findStockByProductId("p1")).willReturn(stock("p1", 42));
 
         StockResponseDto result = service.getByProductId("p1");
 
@@ -110,7 +93,7 @@ class StockServiceImplTest {
 
     @Test
     void getByProductId_returnsZero_whenNoStockRecord() {
-        given(mongoTemplate.findOne(any(Query.class), eq(Stock.class))).willReturn(null);
+        given(stockRepository.findStockByProductId("unknown")).willReturn(null);
 
         StockResponseDto result = service.getByProductId("unknown");
 
@@ -120,16 +103,10 @@ class StockServiceImplTest {
     // ─── set ─────────────────────────────────────────────────────
 
     @Test
-    void set_upsertsStockDocument() {
-        service.set("p1", 50);
-
-        then(mongoTemplate).should().upsert(any(Query.class), any(Update.class), eq(Stock.class));
-    }
-
-    @Test
-    void set_returnsCorrectQuantity() {
+    void set_upsertsAndReturnsCorrectQuantity() {
         StockResponseDto result = service.set("p1", 100);
 
+        then(stockRepository).should().upsert("p1", 100);
         assertThat(result.productId()).isEqualTo("p1");
         assertThat(result.quantity()).isEqualTo(100);
     }
