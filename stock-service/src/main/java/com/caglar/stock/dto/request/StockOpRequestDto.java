@@ -1,4 +1,4 @@
-package com.caglar.product.stock;
+package com.caglar.stock.dto.request;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;

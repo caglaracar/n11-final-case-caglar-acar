@@ -59,7 +59,11 @@ spring:
         - id: notification-service
           uri: lb://notification-service
           predicates:
-            - Path=/dev/v1/contact/**
+            - Path=/dev/v1/notification/**
+        - id: stock-service
+          uri: lb://stock-service
+          predicates:
+            - Path=/dev/v1/stock/**
 
 eureka:
   client:

@@ -6,7 +6,7 @@ import com.caglar.common.exception.BusinessException;
 import com.caglar.order.client.BasketClient;
 import com.caglar.order.client.NotificationClient;
 import com.caglar.order.client.PaymentClient;
-import com.caglar.order.client.ProductStockClient;
+import com.caglar.order.client.StockClient;
 import com.caglar.order.client.UserClient;
 import com.caglar.order.client.dto.AddressDto;
 import com.caglar.order.client.dto.BasketDto;
@@ -44,7 +44,7 @@ class OrderServiceImplTest {
     @Mock OrderRepository orderRepository;
     @Mock BasketClient basketClient;
     @Mock UserClient userClient;
-    @Mock ProductStockClient stockClient;
+    @Mock StockClient stockClient;
     @Mock PaymentClient paymentClient;
     @Mock NotificationClient notificationClient;
 

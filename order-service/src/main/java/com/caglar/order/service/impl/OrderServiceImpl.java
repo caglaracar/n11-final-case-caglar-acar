@@ -8,7 +8,7 @@ import org.springframework.data.domain.Sort;
 import com.caglar.order.client.BasketClient;
 import com.caglar.order.client.NotificationClient;
 import com.caglar.order.client.PaymentClient;
-import com.caglar.order.client.ProductStockClient;
+import com.caglar.order.client.StockClient;
 import com.caglar.order.client.UserClient;
 import com.caglar.order.client.dto.OrderConfirmedNotificationRequest;
 import com.caglar.order.client.dto.AddressDto;
@@ -44,7 +44,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final BasketClient basketClient;
     private final UserClient userClient;
-    private final ProductStockClient stockClient;
+    private final StockClient stockClient;
     private final PaymentClient paymentClient;
     private final NotificationClient notificationClient;
 

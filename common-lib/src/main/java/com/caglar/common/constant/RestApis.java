@@ -19,6 +19,7 @@ public final class RestApis {
     public static final String ORDER    = ROOT_DEV_V1 + "/order";
     public static final String PAYMENT  = ROOT_DEV_V1 + "/payment";
     public static final String NOTIFICATION = ROOT_DEV_V1 + "/notification";
+    public static final String STOCK       = ROOT_DEV_V1 + "/stock";
     public static final String ADMIN    = ROOT_DEV_V1 + "/admin";
 
     public static final String REGISTER     = "/register";
