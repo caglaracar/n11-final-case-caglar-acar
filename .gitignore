@@ -52,5 +52,5 @@ bin/
 .env.production
 .env.prod
 *.env
-!.env.example
-!.env.*.example
+config.template
+config.*.template
