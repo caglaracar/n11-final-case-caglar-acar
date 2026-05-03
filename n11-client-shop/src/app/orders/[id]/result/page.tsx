@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { useCartStore } from '@/features/cart/store';
 import { CheckCircle2, Clock, Loader2, XCircle } from 'lucide-react';
 
 import { getOrderById, getPaymentByOrderId } from '@/features/orders/api/orderApi';
@@ -55,6 +57,13 @@ export default function OrderResultPage() {
 
   const order = orderQuery.data;
   const paymentStatus: PaymentStatus | undefined = paymentQuery.data?.status;
+  const hydrate = useCartStore((s) => s.hydrate);
+
+  useEffect(() => {
+    if (order.status === 'PAID' || order.status === 'FAILED' || order.status === 'CANCELLED') {
+      void hydrate();
+    }
+  }, [order.status, hydrate]);
 
   const variant = resolveVariant(order.status, paymentStatus);
 
