@@ -16,6 +16,7 @@ import type { Order, PaymentStatus } from '@/features/orders/types/orders-types'
 export default function OrderResultPage() {
   const params = useParams<{ id: string }>();
   const orderId = params?.id;
+  const hydrate = useCartStore((s) => s.hydrate);
 
   const orderQuery = useQuery<Order>({
     queryKey: ['order', orderId],
@@ -33,6 +34,14 @@ export default function OrderResultPage() {
     enabled: !!orderId,
     retry: false,
   });
+
+  const orderStatus = orderQuery.data?.status;
+
+  useEffect(() => {
+    if (orderStatus === 'PAID' || orderStatus === 'FAILED' || orderStatus === 'CANCELLED') {
+      void hydrate();
+    }
+  }, [orderStatus, hydrate]);
 
   if (!orderId || orderQuery.isLoading) {
     return (
@@ -57,13 +66,6 @@ export default function OrderResultPage() {
 
   const order = orderQuery.data;
   const paymentStatus: PaymentStatus | undefined = paymentQuery.data?.status;
-  const hydrate = useCartStore((s) => s.hydrate);
-
-  useEffect(() => {
-    if (order.status === 'PAID' || order.status === 'FAILED' || order.status === 'CANCELLED') {
-      void hydrate();
-    }
-  }, [order.status, hydrate]);
 
   const variant = resolveVariant(order.status, paymentStatus);
 
