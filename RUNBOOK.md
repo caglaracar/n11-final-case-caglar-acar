@@ -7,7 +7,10 @@
 ## Lokal Başlatma
 
 ```bash
+# Altyapı (PostgreSQL, MongoDB, Redis, Kafka)
 docker compose up -d
+
+# Build
 mvn -B -ntp clean package -DskipTests
 ```
 
@@ -17,15 +20,16 @@ Servis başlatma sırası (Eureka önce, gateway en son):
 mvn -pl discovery-service spring-boot:run
 mvn -pl auth-service spring-boot:run &
 mvn -pl user-service spring-boot:run &
-mvn -pl product-service spring-boot:run
-mvn -pl basket-service spring-boot:run
-mvn -pl order-service spring-boot:run
-mvn -pl payment-service spring-boot:run
-mvn -pl notification-service spring-boot:run
+mvn -pl product-service spring-boot:run &
+mvn -pl basket-service spring-boot:run &
+mvn -pl stock-service spring-boot:run &
+mvn -pl order-service spring-boot:run &
+mvn -pl payment-service spring-boot:run &
+mvn -pl notification-service spring-boot:run &
 mvn -pl gateway-service spring-boot:run
 ```
 
-Alternatif olarak `mprocs` çalıştırılabilir.
+Alternatif olarak `mprocs` kullanılabilir.
 
 ## Swagger UI
 
@@ -37,6 +41,7 @@ Alternatif olarak `mprocs` çalıştırılabilir.
 | basket | http://localhost:9093/swagger-ui.html |
 | order | http://localhost:9094/swagger-ui.html |
 | payment | http://localhost:9095/swagger-ui.html |
+| stock | http://localhost:9097/swagger-ui.html |
 
 ## Frontend
 
@@ -49,7 +54,7 @@ cd n11-client-admin && npm run dev  # http://localhost:5173
 
 **Kafka bağlanamıyor** — `docker compose up -d kafka` ile container'ın ayakta olduğunu doğrula.
 
-**Servis Eureka'ya kayıt olmadı** — `defaultZone: http://localhost:8761/eureka/` ayarını kontrol et; discovery-service en az 15 saniye önce çalışıyor olmalı.
+**Servis Eureka'ya kayıt olmadı** — discovery-service en az 15 saniye önce çalışıyor olmalı.
 
 **Gateway 401** — Endpoint whitelist'te değilse `Authorization: Bearer <token>` header'ı zorunlu.
 

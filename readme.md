@@ -21,8 +21,7 @@ Gateway (:8080)
 
 **Ödeme akışı (Kafka Saga):**
 ```
-order-service → payment.completed / payment.failed → order-service (durum güncelle)
-payment-service ─────────────────────────────────────────────────────^
+payment-service → payment.completed / payment.failed → order-service
 ```
 
 **Bildirim akışı (direkt HTTP):**
@@ -49,7 +48,7 @@ order-service → POST /notification/order-confirmed → notification-service �
 | **auth-service** | JWT access/refresh token, BCrypt, register/login/logout |
 | **user-service** | Kullanıcı profili CRUD, adres yönetimi |
 | **product-service** | Ürün/kategori/marka/banner CRUD, arama, kampanya |
-| **basket-service** | Sepet (ekle/çıkar/güncelle/temizle) |
+| **basket-service** | Sepet işlemleri (ekle/çıkar/güncelle/temizle) |
 | **stock-service** | Stok yönetimi, atomik rezervasyon ve iade |
 | **order-service** | Sipariş oluşturma, ödeme saga koordinatörü |
 | **payment-service** | İyzico ödeme başlatma ve callback işleme |
@@ -60,7 +59,7 @@ order-service → POST /notification/order-confirmed → notification-service �
 ## Hızlı Başlangıç
 
 ```bash
-# Altyapıyı kaldır
+# Altyapıyı başlat (PostgreSQL, MongoDB, Redis, Kafka)
 docker compose up -d
 
 # Servisleri sırayla başlat (detay için RUNBOOK.md)
