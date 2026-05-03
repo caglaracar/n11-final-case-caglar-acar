@@ -88,6 +88,14 @@ public class ProductServiceImpl implements ProductService {
         return page.map(product -> ProductMapper.toResponse(product, hits.getOrDefault(product.getId(), 0L)));
     }
 
+    @Override
+    @Transactional
+    public void updateStock(String productId, int quantity) {
+        Product product = requireProduct(productId);
+        product.setStock(quantity);
+        productRepository.save(product);
+    }
+
     private Product requireProduct(String id) {
         return productRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorType.NOT_FOUND, "Ürün bulunamadı"));

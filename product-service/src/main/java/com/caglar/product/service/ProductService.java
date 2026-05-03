@@ -17,4 +17,6 @@ public interface ProductService {
     ProductResponseDto getById(String productId);
 
     Page<ProductResponseDto> getList(String q, String categoryId, String brandId, Pageable pageable);
+
+    void updateStock(String productId, int quantity);
 }

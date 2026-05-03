@@ -5,6 +5,7 @@ import com.caglar.common.exception.ErrorType;
 import com.caglar.stock.dto.request.StockOpRequestDto;
 import com.caglar.stock.dto.response.StockResponseDto;
 import com.caglar.stock.entity.Stock;
+import com.caglar.stock.client.ProductClient;
 import com.caglar.stock.repository.StockRepository;
 import com.caglar.stock.service.StockService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
 public class StockServiceImpl implements StockService {
 
     private final StockRepository stockRepository;
+    private final ProductClient productClient;
 
     @Override
     public void reserve(StockOpRequestDto dto) {
@@ -36,13 +38,17 @@ public class StockServiceImpl implements StockService {
                 continue;
             }
             applied.add(item);
+            syncToProduct(item.productId());
         }
         log.info("Stock reserved orderId={} items={}", dto.orderId(), dto.items().size());
     }
 
     @Override
     public void release(StockOpRequestDto dto) {
-        dto.items().forEach(item -> stockRepository.increment(item.productId(), item.quantity()));
+        dto.items().forEach(item -> {
+            stockRepository.increment(item.productId(), item.quantity());
+            syncToProduct(item.productId());
+        });
         log.info("Stock released orderId={} items={}", dto.orderId(), dto.items().size());
     }
 
@@ -57,6 +63,17 @@ public class StockServiceImpl implements StockService {
         stockRepository.upsert(productId, quantity);
         log.info("Stock set productId={} quantity={}", productId, quantity);
         return new StockResponseDto(productId, quantity);
+    }
+
+    private void syncToProduct(String productId) {
+        try {
+            Stock stock = stockRepository.findStockByProductId(productId);
+            if (stock != null) {
+                productClient.updateStock(productId, stock.getQuantity());
+            }
+        } catch (Exception ex) {
+            log.warn("Product stock sync failed productId={}: {}", productId, ex.getMessage());
+        }
     }
 
     private void rollback(List<StockOpRequestDto.Item> applied) {
