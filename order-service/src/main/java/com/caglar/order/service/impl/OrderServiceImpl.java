@@ -61,7 +61,6 @@ public class OrderServiceImpl implements OrderService {
         AddressDto shippingAddress = fetchAddress(request.addressId());
 
         Order order = createPendingOrder(authId, basket, profile, shippingAddress);
-        reserveStockOrFail(order);
         InitCheckoutResponse paymentInit = initiatePaymentOrRollback(order, profile, shippingAddress, request.clientIp());
 
         return new CheckoutResponseDto(order.getId(), paymentInit.paymentPageUrl(), paymentInit.token());
@@ -100,6 +99,7 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
+        reserveStockOrFail(order);
         safeClearBasket(order.getAuthId());
         publishPaidEvents(order);
     }
@@ -114,7 +114,6 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setStatus(OrderStatus.FAILED);
         orderRepository.save(order);
-        safeReleaseStock(order);
         log.info("Order FAILED orderId={} reason={}", orderId, reason);
     }
 
@@ -168,7 +167,6 @@ public class OrderServiceImpl implements OrderService {
         try {
             return unwrap(paymentClient.initiate(paymentRequest).data(), "Ödeme başlatılamadı");
         } catch (RuntimeException ex) {
-            safeReleaseStock(order);
             markFailed(order);
             throw new BusinessException(ErrorType.PAYMENT_FAILED,
                     "Ödeme başlatılamadı: " + ex.getMessage());
@@ -215,7 +213,6 @@ public class OrderServiceImpl implements OrderService {
     private void cancelPendingOrders(Long authId) {
         List<Order> pending = orderRepository.findByAuthIdAndStatus(authId, OrderStatus.PENDING);
         for (Order old : pending) {
-            safeReleaseStock(old);
             old.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(old);
             log.info("Cancelled stale PENDING order={} for authId={}", old.getId(), authId);
@@ -230,13 +227,6 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private void safeReleaseStock(Order order) {
-        try {
-            stockClient.release(CheckoutMapper.toStockOpRequest(order));
-        } catch (RuntimeException ex) {
-            log.error("Stock release failed orderId={}: {}", order.getId(), ex.getMessage());
-        }
-    }
 
     private Order findOrderOrThrow(Long orderId) {
         return orderRepository.findById(orderId)
