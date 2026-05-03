@@ -60,7 +60,7 @@ order-service → POST /notification/order-confirmed → notification-service �
 ## Hızlı Başlangıç
 
 ```bash
-# Altyapıyı kaldır (PostgreSQL, MongoDB, Redis, Kafka, MailHog, Grafana)
+# Altyapıyı kaldır
 docker compose up -d
 
 # Servisleri sırayla başlat (detay için RUNBOOK.md)
@@ -77,8 +77,6 @@ mvn -pl gateway-service spring-boot:run
 ```
 
 Eureka: http://localhost:8761  
-MailHog: http://localhost:8025  
-Grafana: http://localhost:3001  
 Gateway: http://localhost:8080
 
 ## Testler

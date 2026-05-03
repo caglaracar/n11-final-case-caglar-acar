@@ -46,7 +46,7 @@ services:
     container_name: n11-kafka
     depends_on: [ zookeeper ]
     ports:
-      - "9094:9094"  # host'tan erişim
+      - "9094:9094"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -67,39 +67,6 @@ services:
       KAFKA_CLUSTERS_0_NAME: n11-cluster
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       DYNAMIC_CONFIG_ENABLED: "true"
-
-  mailhog:
-    image: mailhog/mailhog:latest
-    container_name: n11-mailhog
-    ports:
-      - "1025:1025"   # SMTP
-      - "8025:8025"   # Web UI
-
-  loki:
-    image: grafana/loki:2.9.8
-    container_name: n11-loki
-    restart: unless-stopped
-    command: -config.file=/etc/loki/local-config.yaml
-    ports:
-      - "3100:3100"
-    volumes:
-      - loki-data:/loki
-
-  grafana:
-    image: grafana/grafana:10.4.2
-    container_name: n11-grafana
-    restart: unless-stopped
-    depends_on: [ loki ]
-    ports:
-      - "3001:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin
-      GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
 
   # ── Microservices ─────────────────────────────────────────────
 
@@ -251,16 +218,15 @@ services:
     ports:
       - "9096:9096"
     environment:
-      MAIL_HOST: ${MAIL_HOST:-mailhog}
-      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
-      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-false}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-true}
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-true}
       SPRING_KAFKA_BOOTSTRAPSERVERS: kafka:9092
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
     depends_on:
-      - mailhog
       - kafka
       - discovery-service
 
@@ -289,5 +255,3 @@ services:
 volumes:
   postgres-data:
   mongo-data:
-  loki-data:
-  grafana-data:
