@@ -11,6 +11,7 @@ import {
   removeBasketItem,
   updateBasketItem,
 } from '@/features/cart/api/basketApi';
+import { getProductById } from '@/features/products/api/productApi';
 import type { RawBasket } from '@/features/cart/types/cart-types';
 import { extractErrorMessage } from '@/shared/lib/api/client';
 import { MAX_PAYMENT_AMOUNT } from '@/shared/lib/payment';
@@ -91,11 +92,17 @@ export const useCartStore = create<CartState>((set, get) => ({
     set({ isLoading: true });
     try {
       const remote = await getMyBasket();
-      set((s) => ({
-        items: mergeThumbnails(s.items, mapItems(remote)),
-        hydrated: true,
-        isLoading: false,
-      }));
+      const lines = mapItems(remote);
+      const thumbnails = await Promise.all(
+        lines.map((line) =>
+          getProductById(line.productId)
+            .then((p) => ({ id: line.productId, url: p.images?.[0] ?? p.thumbnail ?? undefined }))
+            .catch(() => ({ id: line.productId, url: undefined }))
+        )
+      );
+      const thumbMap = Object.fromEntries(thumbnails.map((t) => [t.id, t.url]));
+      const withThumbs = lines.map((l) => ({ ...l, thumbnail: thumbMap[l.productId] }));
+      set({ items: withThumbs, hydrated: true, isLoading: false });
     } catch (err) {
       console.error('[basket] hydrate failed', err);
       set({ hydrated: true, isLoading: false });

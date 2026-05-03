@@ -106,17 +106,20 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void checkout_rollsBackOrderAndReleasesStock_whenPaymentInitFails() {
+    void checkout_rollsBackOrder_whenPaymentInitFails() {
         given(basketClient.getMyBasket()).willReturn(BaseResponse.success(
                 basket(List.of(new BasketDto.Item("p1", "Laptop", 1, 100.0)), 100.0)));
         given(userClient.me()).willReturn(BaseResponse.success(profile("user@mail.com")));
         given(userClient.myAddresses()).willReturn(BaseResponse.success(List.of(address("addr-1"))));
-        given(orderRepository.save(any())).willReturn(buildOrder(10L, AUTH_ID, OrderStatus.PENDING, 100.0));
-        willThrow(new RuntimeException("Stok rezerve edilemedi")).given(stockClient).reserve(any());
+        Order savedOrder = buildOrder(10L, AUTH_ID, OrderStatus.PENDING, 100.0);
+        given(orderRepository.save(any())).willReturn(savedOrder);
+        willThrow(new RuntimeException("Ödeme servisi yanıt vermedi")).given(paymentClient).initiate(any());
 
         assertThatThrownBy(() -> service.checkout(AUTH_ID, new CheckoutRequestDto("addr-1", "127.0.0.1")))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining("Stok");
+                .hasMessageContaining("Ödeme başlatılamadı");
+
+        then(stockClient).shouldHaveNoInteractions(); // stok artık checkout'ta rezerve edilmiyor
     }
 
     // ─── Sipariş sorgulama ───────────────────────────────────────
@@ -216,7 +219,7 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void onPaymentFailed_marksOrderAsFailedAndReleasesStock() {
+    void onPaymentFailed_marksOrderAsFailed() {
         Order order = buildOrder(5L, AUTH_ID, OrderStatus.PENDING, 100.0);
         given(orderRepository.findById(5L)).willReturn(Optional.of(order));
         given(orderRepository.save(any())).willReturn(order);
@@ -224,7 +227,7 @@ class OrderServiceImplTest {
         service.onPaymentFailed(5L, "Kart limiti yetersiz");
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.FAILED);
-        then(stockClient).should().release(any());
+        then(stockClient).shouldHaveNoInteractions(); // stok checkout'ta rezerve edilmediği için release gerekmez
     }
 
     // ─── Admin ───────────────────────────────────────────────────
