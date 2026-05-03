@@ -161,6 +161,7 @@ jobs:
             --set-env-vars="SPRING_PROFILES_ACTIVE=staging,SERVER_PORT=8080${EXTRA_ENV_VARS}" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest${KAFKA_SECRETS}${EXTRA_SECRETS}" \
             --min-instances=${MIN_INSTANCES} \
+            --no-cpu-throttling \
             --memory=1Gi \
             --cpu=1 \
             --timeout=300 \
@@ -257,6 +258,7 @@ jobs:
             --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SERVER_PORT=8080${EXTRA_ENV_VARS}" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest${KAFKA_SECRETS}${EXTRA_SECRETS}" \
             --min-instances=${MIN_INSTANCES} \
+            --no-cpu-throttling \
             --memory=1Gi \
             --cpu=1 \
             --timeout=300 \
