@@ -2,6 +2,28 @@
 
 Spring Boot tabanlı mikroservis mimarisiyle geliştirilmiş tam fonksiyonlu e-ticaret uygulaması.
 
+## Canlı Ortam
+
+| Uygulama | URL |
+|----------|-----|
+| Shop | https://sepetify-shop.vercel.app |
+| Admin | https://sepetify-admin.vercel.app |
+
+## Swagger UI (Staging)
+
+| Servis | URL |
+|--------|-----|
+| auth-service | https://auth-service-staging-693501117153.europe-west1.run.app/swagger-ui/index.html |
+| user-service | https://user-service-staging-693501117153.europe-west1.run.app/swagger-ui/index.html |
+| product-service | https://product-service-staging-693501117153.europe-west1.run.app/swagger-ui/index.html |
+| basket-service | https://basket-service-staging-693501117153.europe-west1.run.app/swagger-ui/index.html |
+| stock-service | https://stock-service-staging-693501117153.europe-west1.run.app/swagger-ui/index.html |
+| order-service | https://order-service-staging-693501117153.europe-west1.run.app/swagger-ui/index.html |
+| payment-service | https://payment-service-staging-693501117153.europe-west1.run.app/swagger-ui/index.html |
+| notification-service | https://notification-service-staging-693501117153.europe-west1.run.app/swagger-ui/index.html |
+
+---
+
 ## Mimari
 
 10 mikroservis, Spring Cloud Gateway üzerinden tek giriş noktasıyla dışarıya açılıyor. Servisler arası senkron iletişim OpenFeign, ödeme saga'sı için asenkron iletişim Kafka ile sağlanıyor.
@@ -83,21 +105,9 @@ Gateway: http://localhost:8080
 JUnit 5 + Mockito ile servis katmanı unit testleri. Spring context yüklenmeden çalışır.
 
 ```bash
-# Tüm modülleri test et
 mvn test
-
-# Belirli bir servis
 mvn -pl order-service test
-
-# Tek test sınıfı
 mvn -pl auth-service test -Dtest=AuthServiceImplTest
 ```
 
 Kapsanan servisler: `auth-service`, `basket-service`, `order-service`, `payment-service`, `user-service`, `stock-service`
-
-## Canlı Ortam
-
-| Uygulama | URL |
-|----------|-----|
-| Shop | https://sepetify-shop.vercel.app |
-| Admin | https://sepetify-admin.vercel.app |
