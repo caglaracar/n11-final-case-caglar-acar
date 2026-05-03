@@ -20,6 +20,7 @@ on:
           - order-service
           - payment-service
           - notification-service
+          - stock-service
           - gateway-service
         default: 'all'
       environment:
@@ -60,13 +61,14 @@ jobs:
             order-service: ['order-service/**', 'common-lib/**']
             payment-service: ['payment-service/**', 'common-lib/**']
             notification-service: ['notification-service/**', 'common-lib/**']
+            stock-service: ['stock-service/**', 'common-lib/**']
             gateway-service: ['gateway-service/**', 'common-lib/**']
             discovery-service: ['discovery-service/**', 'common-lib/**']
       - id: compute
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             if [ "${{ inputs.service }}" = "all" ]; then
-              echo 'services=["auth-service","user-service","product-service","basket-service","order-service","payment-service","notification-service","gateway-service"]' >> $GITHUB_OUTPUT
+              echo 'services=["auth-service","user-service","product-service","basket-service","order-service","payment-service","notification-service","stock-service","gateway-service"]' >> $GITHUB_OUTPUT
             else
               echo 'services=["${{ inputs.service }}"]' >> $GITHUB_OUTPUT
             fi
@@ -189,12 +191,13 @@ jobs:
           ORDER_URL=$(get_url order-service)
           PAYMENT_URL=$(get_url payment-service)
           NOTIFICATION_URL=$(get_url notification-service)
+          STOCK_URL=$(get_url stock-service)
           gcloud run deploy gateway-service-staging \
             --image=${{ env.REGISTRY }}/gateway-service:latest \
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
-            --set-env-vars="SPRING_PROFILES_ACTIVE=staging,SERVER_PORT=8080,AUTH_SERVICE_URL=${AUTH_URL},USER_SERVICE_URL=${USER_URL},PRODUCT_SERVICE_URL=${PRODUCT_URL},BASKET_SERVICE_URL=${BASKET_URL},ORDER_SERVICE_URL=${ORDER_URL},PAYMENT_SERVICE_URL=${PAYMENT_URL},NOTIFICATION_SERVICE_URL=${NOTIFICATION_URL}" \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=staging,SERVER_PORT=8080,AUTH_SERVICE_URL=${AUTH_URL},USER_SERVICE_URL=${USER_URL},PRODUCT_SERVICE_URL=${PRODUCT_URL},BASKET_SERVICE_URL=${BASKET_URL},ORDER_SERVICE_URL=${ORDER_URL},PAYMENT_SERVICE_URL=${PAYMENT_URL},NOTIFICATION_SERVICE_URL=${NOTIFICATION_URL},STOCK_SERVICE_URL=${STOCK_URL}" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,REDIS_HOST=REDIS_HOST:latest" \
             --vpc-egress=private-ranges-only \
             --min-instances=1 \
@@ -281,12 +284,13 @@ jobs:
           ORDER_URL=$(get_url order-service)
           PAYMENT_URL=$(get_url payment-service)
           NOTIFICATION_URL=$(get_url notification-service)
+          STOCK_URL=$(get_url stock-service)
           gcloud run deploy gateway-service \
             --image=${{ env.REGISTRY }}/gateway-service:latest \
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
-            --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SERVER_PORT=8080,AUTH_SERVICE_URL=${AUTH_URL},USER_SERVICE_URL=${USER_URL},PRODUCT_SERVICE_URL=${PRODUCT_URL},BASKET_SERVICE_URL=${BASKET_URL},ORDER_SERVICE_URL=${ORDER_URL},PAYMENT_SERVICE_URL=${PAYMENT_URL},NOTIFICATION_SERVICE_URL=${NOTIFICATION_URL}" \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SERVER_PORT=8080,AUTH_SERVICE_URL=${AUTH_URL},USER_SERVICE_URL=${USER_URL},PRODUCT_SERVICE_URL=${PRODUCT_URL},BASKET_SERVICE_URL=${BASKET_URL},ORDER_SERVICE_URL=${ORDER_URL},PAYMENT_SERVICE_URL=${PAYMENT_URL},NOTIFICATION_SERVICE_URL=${NOTIFICATION_URL},STOCK_SERVICE_URL=${STOCK_URL}" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,REDIS_HOST=REDIS_HOST:latest" \
             --vpc-egress=private-ranges-only \
             --min-instances=1 \

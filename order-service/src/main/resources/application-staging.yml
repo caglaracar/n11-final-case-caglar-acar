@@ -56,3 +56,5 @@ feign:
     url: https://user-service-staging-693501117153.europe-west1.run.app
   notification-service:
     url: https://notification-service-staging-693501117153.europe-west1.run.app
+  stock-service:
+    url: https://stock-service-staging-693501117153.europe-west1.run.app
