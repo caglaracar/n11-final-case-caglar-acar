@@ -44,11 +44,13 @@ class StockServiceImplTest {
 
     @Test
     void reserve_rollsBackAndThrows_whenStockInsufficient() {
-        // İlk ürün başarılı, ikinci ürün için stok yok → rollback
+        // p1 başarılı, p2 kayıt var ama yetersiz → rollback + exception
         Stock existing = stock("p1", 5);
         given(mongoTemplate.findAndModify(any(Query.class), any(Update.class), eq(Stock.class)))
                 .willReturn(existing)  // p1 başarılı
                 .willReturn(null);     // p2 yetersiz
+        given(mongoTemplate.exists(any(Query.class), eq(Stock.class)))
+                .willReturn(true);     // p2 kaydı var ama stok yetersiz
 
         StockOpRequestDto req = new StockOpRequestDto(1L, List.of(
                 new StockOpRequestDto.Item("p1", 2),
@@ -62,12 +64,26 @@ class StockServiceImplTest {
 
     @Test
     void reserve_throwsImmediately_whenSingleItemInsufficient() {
+        // Kayıt var ama talep edilen miktar mevcut stoktan fazla
         given(mongoTemplate.findAndModify(any(Query.class), any(Update.class), eq(Stock.class)))
                 .willReturn(null);
+        given(mongoTemplate.exists(any(Query.class), eq(Stock.class)))
+                .willReturn(true); // kayıt var, ama stok yetersiz
 
         assertThatThrownBy(() -> service.reserve(opRequest(1L, "p1", 99)))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("p1");
+    }
+
+    @Test
+    void reserve_skipsItem_whenNoStockRecord() {
+        // Kayıt yoksa rezervasyon skip edilmeli, exception fırlatılmamalı
+        given(mongoTemplate.findAndModify(any(Query.class), any(Update.class), eq(Stock.class)))
+                .willReturn(null);
+        given(mongoTemplate.exists(any(Query.class), eq(Stock.class)))
+                .willReturn(false); // kayıt yok = takip edilmiyor
+
+        service.reserve(opRequest(1L, "unknown-product", 5)); // exception fırlatmamalı
     }
 
     // ─── release ─────────────────────────────────────────────────
