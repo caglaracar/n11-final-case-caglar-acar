@@ -28,21 +28,23 @@ public class StockServiceImpl implements StockService {
     public void reserve(StockOpRequestDto dto) {
         List<StockOpRequestDto.Item> applied = new ArrayList<>();
         for (StockOpRequestDto.Item item : dto.items()) {
-            Query existsQuery = new Query(Criteria.where("productId").is(item.productId()));
-            boolean hasRecord = mongoTemplate.exists(existsQuery, Stock.class);
-            if (!hasRecord) {
-                log.info("No stock record for productId={}, skipping reservation", item.productId());
-                continue;
-            }
             Query query = new Query(
                     Criteria.where("productId").is(item.productId())
                             .and("quantity").gte(item.quantity()));
             Update update = new Update().inc("quantity", -item.quantity());
             Stock updated = mongoTemplate.findAndModify(query, update, Stock.class);
             if (updated == null) {
-                rollback(applied);
-                throw new BusinessException(ErrorType.PRODUCT_OUT_OF_STOCK,
-                        "Yetersiz stok: productId=" + item.productId());
+                // Kayıt yok → stok takibi yapılmıyor, geç
+                // Kayıt var ama yetersiz → blokla
+                boolean exists = mongoTemplate.exists(
+                        new Query(Criteria.where("productId").is(item.productId())), Stock.class);
+                if (exists) {
+                    rollback(applied);
+                    throw new BusinessException(ErrorType.PRODUCT_OUT_OF_STOCK,
+                            "Yetersiz stok: productId=" + item.productId());
+                }
+                log.info("Stock record missing for productId={}, skipping", item.productId());
+                continue;
             }
             applied.add(item);
         }
