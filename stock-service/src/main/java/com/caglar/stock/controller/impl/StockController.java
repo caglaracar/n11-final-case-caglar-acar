@@ -9,6 +9,7 @@ import com.caglar.stock.service.StockService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import static com.caglar.common.constant.RestApis.STOCK;
@@ -42,6 +43,7 @@ public class StockController extends BaseController implements IStockApi {
 
     @Override
     @PutMapping("/{productId}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<StockResponseDto>> set(@PathVariable String productId,
                                                               @RequestParam int quantity) {
         return ok(stockService.set(productId, quantity));

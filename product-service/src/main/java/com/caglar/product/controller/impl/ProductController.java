@@ -55,6 +55,7 @@ public class ProductController extends BaseController implements IProductApi {
     }
 
     @PutMapping("/{id}/stock")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BaseResponse<Void>> updateStock(@PathVariable String id,
                                                           @RequestParam int quantity) {
         productService.updateStock(id, quantity);
