@@ -4,23 +4,13 @@ import { Logo } from '@/shared/components/Logo';
 export function Footer() {
   return (
     <footer className="mt-24 border-t bg-muted/30">
-      <div className="container grid gap-10 py-12 md:grid-cols-4">
+      <div className="container grid gap-10 py-12 md:grid-cols-2">
         <div>
           <Logo />
           <p className="mt-4 max-w-xs text-sm text-muted-foreground">
             Sepetify, premium ürünleri uygun fiyatlarla bir araya getiren Türkiye&apos;nin yeni nesil alışveriş platformu.
           </p>
         </div>
-        <FooterCol title="Sepetify">
-          <FooterLink href="/about">Hakkımızda</FooterLink>
-          <FooterLink href="/contact">İletişim</FooterLink>
-          <FooterLink href="/careers">Kariyer</FooterLink>
-        </FooterCol>
-        <FooterCol title="Yardım">
-          <FooterLink href="/help/shipping">Kargo</FooterLink>
-          <FooterLink href="/help/returns">İade</FooterLink>
-          <FooterLink href="/help/faq">SSS</FooterLink>
-        </FooterCol>
         <FooterCol title="Hesap">
           <FooterLink href="/auth?tab=login">Giriş Yap</FooterLink>
           <FooterLink href="/auth?tab=register">Kayıt Ol</FooterLink>
