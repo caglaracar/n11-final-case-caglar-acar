@@ -96,7 +96,7 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
-        reserveStockOrFail(order);
+        safeReserveStock(order);
         safeClearBasket(order.getAuthId());
         publishPaidEvents(order);
     }
@@ -143,6 +143,14 @@ public class OrderServiceImpl implements OrderService {
     private Order createPendingOrder(Long authId, BasketDto basket, UserProfileDto profile, AddressDto address) {
         Order order = CheckoutMapper.toPendingOrder(authId, basket, profile, address, CURRENCY);
         return orderRepository.save(order);
+    }
+
+    private void safeReserveStock(Order order) {
+        try {
+            stockClient.reserve(CheckoutMapper.toStockOpRequest(order));
+        } catch (Exception ex) {
+            log.warn("Stock reserve skipped after payment orderId={}: {}", order.getId(), ex.getMessage());
+        }
     }
 
     private void reserveStockOrFail(Order order) {
