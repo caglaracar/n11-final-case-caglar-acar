@@ -1,6 +1,5 @@
 package com.caglar.order.service.impl;
 
-import com.caglar.common.event.OrderPlacedEvent;
 import com.caglar.common.exception.BusinessException;
 import com.caglar.common.exception.ErrorType;
 import org.springframework.data.domain.Page;
@@ -22,7 +21,6 @@ import com.caglar.order.dto.response.CheckoutResponseDto;
 import com.caglar.order.dto.response.OrderResponseDto;
 import com.caglar.order.entity.Order;
 import com.caglar.order.enums.OrderStatus;
-import com.caglar.order.helper.OrderEventPublisher;
 import com.caglar.order.mapper.CheckoutMapper;
 import com.caglar.order.mapper.OrderMapper;
 import com.caglar.order.repository.OrderRepository;
@@ -48,7 +46,6 @@ public class OrderServiceImpl implements OrderService {
     private final UserClient userClient;
     private final ProductStockClient stockClient;
     private final PaymentClient paymentClient;
-    private final OrderEventPublisher eventPublisher;
     private final NotificationClient notificationClient;
 
     @Override
@@ -174,11 +171,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void publishPaidEvents(Order order) {
-        eventPublisher.publishOrderPlaced(new OrderPlacedEvent(
-                order.getId(), order.getAuthId(), order.getCustomerEmail(),
-                order.getCustomerName(), order.getTotalAmount(), order.getCurrency()));
-        eventPublisher.publishConfirmationEmail(order.getCustomerEmail(),
-                order.getId(), order.getTotalAmount(), order.getCurrency());
         safeNotifyOrderConfirmed(order);
     }
 
