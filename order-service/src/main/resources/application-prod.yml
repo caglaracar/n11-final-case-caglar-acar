@@ -13,6 +13,9 @@ spring:
     password: ${DB_USER_PASSWORD}
     hikari:
       connection-timeout: 30000
+      keepalive-time: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
       initialization-fail-timeout: 60000
       maximum-pool-size: 5
   jpa:
