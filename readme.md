@@ -96,7 +96,7 @@ mvn -pl order-service test
 mvn -pl auth-service test -Dtest=AuthServiceImplTest
 ```
 
-Kapsanan servisler: `auth-service`, `basket-service`, `order-service`, `payment-service`
+Kapsanan servisler: `auth-service`, `basket-service`, `order-service`, `payment-service`, `user-service`, `stock-service`
 
 ## Canlı Ortam
 
