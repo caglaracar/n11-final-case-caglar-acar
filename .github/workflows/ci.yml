@@ -148,15 +148,18 @@ jobs:
           if [ "${{ matrix.service }}" = "discovery-service" ]; then
             MIN_INSTANCES=0
           fi
+          CLOUDSQL_OPTS="--add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres --vpc-egress=private-ranges-only"
+          if [ "${{ matrix.service }}" = "stock-service" ]; then
+            CLOUDSQL_OPTS=""
+          fi
           gcloud run deploy ${{ matrix.service }}-staging \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
-            --add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres \
+            ${CLOUDSQL_OPTS} \
             --set-env-vars="SPRING_PROFILES_ACTIVE=staging,SERVER_PORT=8080${EXTRA_ENV_VARS}" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest${KAFKA_SECRETS}${EXTRA_SECRETS}" \
-            --vpc-egress=private-ranges-only \
             --min-instances=${MIN_INSTANCES} \
             --memory=1Gi \
             --cpu=1 \
@@ -241,15 +244,18 @@ jobs:
           if [ "${{ matrix.service }}" = "discovery-service" ]; then
             MIN_INSTANCES=0
           fi
+          CLOUDSQL_OPTS="--add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres --vpc-egress=private-ranges-only"
+          if [ "${{ matrix.service }}" = "stock-service" ]; then
+            CLOUDSQL_OPTS=""
+          fi
           gcloud run deploy ${{ matrix.service }} \
             --image=${{ env.REGISTRY }}/${{ matrix.service }}:latest \
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
-            --add-cloudsql-instances=n11-patika-final:europe-west1:n11-postgres \
+            ${CLOUDSQL_OPTS} \
             --set-env-vars="SPRING_PROFILES_ACTIVE=prod,SERVER_PORT=8080${EXTRA_ENV_VARS}" \
             --set-secrets="JWT_SECRET=JWT_SECRET:latest,DB_USER_PASSWORD=DB_USER_PASSWORD:latest,MONGODB_URI=${MONGO_SECRET}:latest,REDIS_HOST=REDIS_HOST:latest,CLOUD_SQL_CONNECTION_NAME=CLOUD_SQL_CONNECTION_NAME:latest${KAFKA_SECRETS}${EXTRA_SECRETS}" \
-            --vpc-egress=private-ranges-only \
             --min-instances=${MIN_INSTANCES} \
             --memory=1Gi \
             --cpu=1 \
