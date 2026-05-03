@@ -78,24 +78,8 @@ public class JwtTokenManager {
         }
     }
 
-    public Optional<Long> extractAuthId(String token) {
-        return parse(token).map(c -> Long.valueOf(c.getSubject()));
-    }
-
-    public Optional<String> extractRole(String token) {
-        return parse(token).map(c -> c.get("role", String.class));
-    }
-
     public Optional<String> extractJti(String token) {
         return parse(token).map(Claims::getId);
-    }
-
-    public boolean isAccess(String token) {
-        return parse(token).map(c -> "access".equals(c.get("typ", String.class))).orElse(false);
-    }
-
-    public boolean isRefresh(String token) {
-        return parse(token).map(c -> "refresh".equals(c.get("typ", String.class))).orElse(false);
     }
 
     public record RefreshToken(String token, String jti, long expiresAt) {}

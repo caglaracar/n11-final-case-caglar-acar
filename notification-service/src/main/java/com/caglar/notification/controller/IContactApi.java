@@ -8,7 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Contact", description = "İletişim formu")
+@Tag(name = "Notification", description = "İletişim formu")
 public interface IContactApi {
 
     @Operation(summary = "İletişim formu gönder (public)")
