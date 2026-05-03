@@ -28,6 +28,12 @@ public class StockServiceImpl implements StockService {
     public void reserve(StockOpRequestDto dto) {
         List<StockOpRequestDto.Item> applied = new ArrayList<>();
         for (StockOpRequestDto.Item item : dto.items()) {
+            Query existsQuery = new Query(Criteria.where("productId").is(item.productId()));
+            boolean hasRecord = mongoTemplate.exists(existsQuery, Stock.class);
+            if (!hasRecord) {
+                log.info("No stock record for productId={}, skipping reservation", item.productId());
+                continue;
+            }
             Query query = new Query(
                     Criteria.where("productId").is(item.productId())
                             .and("quantity").gte(item.quantity()));
